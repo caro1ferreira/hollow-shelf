@@ -103,7 +103,7 @@ const blank = () => ({
   quotes: [], sessions: [], session: null, spent: 0,
   shop: { owned: ['default'], hat: '', neck: '', decor: [], theme: 'default', companion: '' },
   settings: { sound: true, sky: 'auto', seasons: true, shelfView: { book: 'grid', game: 'grid' },
-    server: '', steamUser: 'https://steamcommunity.com/id/redfiexd/', lastSteamSync: '' }
+    server: 'https://ivy-shelf.anacarolina-ferr.workers.dev', steamUser: 'https://steamcommunity.com/id/redfiexd/', lastSteamSync: '' }
 });
 let S = blank();
 let storageOK = true;
@@ -146,6 +146,7 @@ function normalize(s) {
   if (!out.shop.owned.includes('default')) out.shop.owned.push('default');
   out.settings = Object.assign(blank().settings, out.settings || {});
   out.settings.shelfView = Object.assign({ book: 'grid', game: 'grid' }, out.settings.shelfView || {});
+  if (!out.settings.server) out.settings.server = 'https://ivy-shelf.anacarolina-ferr.workers.dev';
   out.spent = +out.spent || 0;
   out.version = 2;
   return out;
