@@ -102,7 +102,8 @@ const blank = () => ({
   items: [], collections: [], journal: [], logs: [], achievements: {},
   quotes: [], sessions: [], session: null, spent: 0,
   shop: { owned: ['default'], hat: '', neck: '', decor: [], theme: 'default', companion: '' },
-  settings: { sound: true, sky: 'auto', seasons: true, shelfView: { book: 'grid', game: 'grid' } }
+  settings: { sound: true, sky: 'auto', seasons: true, shelfView: { book: 'grid', game: 'grid' },
+    server: '', steamUser: 'https://steamcommunity.com/id/redfiexd/', lastSteamSync: '' }
 });
 let S = blank();
 let storageOK = true;
@@ -396,9 +397,9 @@ function renderShell() {
     <div class="brand"><div class="brand-title">Ivy Shelf</div><div class="brand-sub">LV ${p.level} · ${p.into}/${p.need} XP</div></div>
     <button class="chip-stat" data-act="go" data-r="shop" aria-label="Acorn shop">${acorn()}${p.acorns}</button>`;
   const tabs = [['home', 'Home', homeIco], ['books', 'Books', bookIco], ['games', 'Games', padIco], ['journal', 'Journal', quillIco], ['more', 'More', moreIco]];
-  const onMore = ['wishlist', 'collections', 'stats', 'settings', 'shop'].includes(k);
+  const onMore = ['wishlist', 'collections', 'stats', 'settings', 'shop', 'steam'].includes(k);
   $('#tabbar').innerHTML = tabs.map(([id, n, ico]) => `<button class="${(k === id || (id === 'more' && onMore)) ? 'on' : ''}" data-act="${id === 'more' ? 'more' : 'go'}" data-r="${id}"><div class="tab-ico">${ico()}</div><span>${n}</span></button>`).join('');
-  $('#fab').classList.toggle('hide', route.startsWith('item-') || route.startsWith('review-') || route === 'shop' || fabHidden);
+  $('#fab').classList.toggle('hide', route.startsWith('item-') || route.startsWith('review-') || route === 'shop' || route === 'steam' || fabHidden);
   renderSessionPill(); renderCompanion(); applySky();
 }
 function levelBox(p) {
@@ -412,7 +413,7 @@ function render(scrollTop) {
   if (route.startsWith('item-')) html = viewItem(route.slice(5));
   else if (route.startsWith('collection-')) html = viewCollection(route.slice(11));
   else if (route.startsWith('review-')) html = viewReview(+route.slice(7));
-  else html = ({ home: viewHome, books: () => viewShelf('book'), games: () => viewShelf('game'), wishlist: viewWishlist, collections: viewCollections, journal: viewJournal, stats: viewStats, shop: viewShop, settings: viewSettings }[route] || viewHome)();
+  else html = ({ steam: viewSteam, home: viewHome, books: () => viewShelf('book'), games: () => viewShelf('game'), wishlist: viewWishlist, collections: viewCollections, journal: viewJournal, stats: viewStats, shop: viewShop, settings: viewSettings }[route] || viewHome)();
   $('#main').innerHTML = (storageOK ? '' : `<div class="banner">Your device isn’t letting the app save right now. Save a backup in Settings so nothing gets lost.</div>`) + html;
   if (scrollTop) window.scrollTo(0, 0);
 }
@@ -496,7 +497,7 @@ function viewShelf(type) {
   const extra = type === 'book' ? [...new Set(all.map(i => i.genre).filter(Boolean))].sort() : [...new Set(all.map(i => i.platform).filter(Boolean))].sort();
   const key = type === 'book' ? 'genre' : 'platform';
   return `
-  <div class="page-head"><div><div class="label">${type === 'book' ? 'The shelf' : 'The arcade'}</div><h1>${type === 'book' ? 'Library' : 'Games'}</h1></div>
+  <div class="page-head"><div><div class="label">${type === 'book' ? 'The shelf' : 'The arcade'}</div><h1>${type === 'book' ? 'Library' : 'Games'}</h1>${type === 'game' && S.settings.server ? `<button class="link" data-act="go" data-r="steam" style="margin-top:6px">Import from Steam</button>` : ''}</div>
     <div class="row"><div class="toggle2"><button class="${view === 'grid' ? 'on' : ''}" data-act="view" data-type="${type}" data-v="grid">Covers</button><button class="${view === 'shelf' ? 'on' : ''}" data-act="view" data-type="${type}" data-v="shelf">Shelf</button></div>
     <button class="btn sm ${type === 'book' ? 'primary' : 'mint'}" data-act="add" data-type="${type}">+ Add</button></div></div>
   <div class="chips">${['all', ...STATUS].map(s => `<button class="chip ${f.status === s ? 'on' : ''}" data-act="filter" data-type="${type}" data-k="status" data-v="${s}">${s === 'all' ? 'All' : LABEL[type][s]}<span class="n">${s === 'all' ? all.length : all.filter(i => i.status === s).length}</span></button>`).join('')}</div>
@@ -787,8 +788,13 @@ function viewSettings() {
     <div class="row"><button class="btn primary" data-act="export">Save backup</button><button class="btn" data-act="import">Restore backup</button></div>
     <p class="note" style="margin:0">${S.items.length} items · ${S.journal.length} journal entries · ${S.quotes.length} lines · ${S.collections.length} collections</p>
   </div>
-  <div class="section"><h2>Steam</h2></div>
-  <div class="px card"><p style="margin:0">Paste a Steam store link when adding a game and its cover appears automatically. Game search by name and automatic playtime sync are coming in the next phase.</p></div>
+  <div class="section"><h2>Games &amp; Steam</h2></div>
+  <div class="px card stack">
+    <label class="field"><span>HELPER SERVER ADDRESS</span><input class="inp" inputmode="url" placeholder="https://ivy-shelf.….workers.dev" value="${esc(st.server)}" data-change="server"></label>
+    <label class="field"><span>YOUR STEAM PROFILE</span><input class="inp" inputmode="url" value="${esc(st.steamUser)}" data-change="steamuser"></label>
+    <div class="row"><button class="btn sm" data-act="testserver" ${st.server ? '' : 'disabled'}>Test connection</button><button class="btn sm mint" data-act="steamsync" ${st.server ? '' : 'disabled'}>Sync hours now</button><button class="btn sm primary" data-act="go" data-r="steam" ${st.server ? '' : 'disabled'}>Import from Steam</button></div>
+    <p class="note" style="margin:0" id="server-msg">${st.server ? (st.lastSteamSync ? 'Hours last synced ' + fmtDate(st.lastSteamSync) + '. They sync by themselves once a day when you open the app.' : 'Hours sync by themselves once a day when you open the app.') : 'Add the helper server address to search games by name (with real covers) and sync your Steam playtime.'}</p>
+  </div>
   <div class="section"><h2>Danger zone</h2></div>
   <div class="px card"><button class="btn danger" data-act="wipe">Erase everything</button></div>
   <p class="note" style="margin-top:22px;text-align:center">Ivy Shelf · v2.1 · book data from Open Library &amp; Google Books</p>`;
@@ -853,7 +859,9 @@ function formHTML() {
       <form class="search-row" data-submit="search"><input class="inp" id="q" type="search" enterkeyhint="search" placeholder="e.g. Anne of Green Gables" autocomplete="off"><button class="btn primary" type="submit">Search</button></form></div>
     <button class="btn sm" data-act="scan" style="margin-bottom:6px">${scanIco()} Scan barcode</button>
     <div id="results"></div>` : `
-    <p class="note" style="margin-top:0">Tip: paste the game’s Steam store link and the cover fills in by itself.</p>`}
+    ${S.settings.server ? `<div class="field"><span>FIND A GAME</span>
+      <form class="search-row" data-submit="gsearch"><input class="inp" id="gq" type="search" enterkeyhint="search" placeholder="e.g. Stardew Valley" autocomplete="off"><button class="btn mint" type="submit">Search</button></form></div>
+    <div id="results"></div>` : `<p class="note" style="margin-top:0">Tip: paste the game’s Steam store link and the cover fills in by itself.</p>`}`}
   <div class="form-cover" style="margin-top:14px">
     <div id="form-cover">${coverHTML(d)}</div>
     <div class="stack" style="margin-top:0">
@@ -1002,6 +1010,102 @@ function stopSession() {
     };
     $('#ss-discard').onclick = () => { S.session = null; closeModal(); commit(); };
   });
+}
+
+/* ---------- helper server: game search + Steam ---------- */
+async function api(path) {
+  if (!S.settings.server) throw new Error('Add the helper server address in Settings');
+  let r, j;
+  try { r = await fetch(S.settings.server + path); } catch (e) { throw new Error('Couldn’t reach the helper server — are you online?'); }
+  try { j = await r.json(); } catch (e) { throw new Error('The helper server didn’t answer properly'); }
+  if (!r.ok || (j && j.error)) throw new Error((j && j.error) || ('Server error ' + r.status));
+  return j;
+}
+let gameResults = [];
+const IGDB_PLATFORM = { PC: 'Steam', Switch: 'Switch', 'Switch 2': 'Switch', PS5: 'PS5', PS4: 'PS4', XONE: 'Xbox', 'Series X|S': 'Xbox', iOS: 'Mobile', Android: 'Mobile' };
+async function doGameSearch(q) {
+  const box = $('#results'); if (!q.trim() || !box) return;
+  box.innerHTML = `<p class="note">Searching the arcade…</p>`;
+  try { gameResults = await api('/games/search?q=' + encodeURIComponent(q)); }
+  catch (e) { box.innerHTML = `<p class="err">${esc(e.message)}. You can still paste a Steam link or fill it in by hand.</p>`; return; }
+  if (!gameResults.length) { box.innerHTML = `<p class="note">Nothing found. Try another spelling, or fill it in by hand below.</p>`; return; }
+  box.innerHTML = `<div class="results">${gameResults.map((r, i) => `<button class="result" data-act="gpick" data-i="${i}">${coverHTML({ type: 'game', title: r.title, cover_url: r.cover_url }, true)}<div><b>${esc(r.title)}</b><span class="small muted">${[r.year, r.platforms.slice(0, 4).join(', ')].filter(Boolean).join(' · ')}</span></div></button>`).join('')}</div>`;
+}
+async function pickGame(r) {
+  Object.assign(draft, { title: r.title, cover_url: r.cover_url || draft.cover_url, cover_fallbacks: [], genre: r.genre || draft.genre, synopsis: r.synopsis || draft.synopsis, igdb_id: r.igdb_id });
+  if (!r.platforms.includes('PC')) { const p = r.platforms.map(x => IGDB_PLATFORM[x]).find(Boolean); if (p) draft.platform = p; }
+  rerenderForm(); sfx('pop');
+  try {
+    const t = await api('/games/ttb?id=' + r.igdb_id);
+    if (t.normally && draft && !draft.total_hours) { draft.total_hours = t.normally; const el = $('input[data-k="total_hours"]'); if (el) el.value = t.normally; }
+  } catch (e) {}
+}
+
+let steamData = null; // { loading, error, games }
+async function loadSteam() {
+  steamData = { loading: true }; render();
+  try { const d = await api('/steam/library?user=' + encodeURIComponent(S.settings.steamUser || '')); steamData = { games: d.games }; }
+  catch (e) { steamData = { error: e.message }; }
+  if (route === 'steam') render();
+}
+function viewSteam() {
+  const head = `<button class="link" data-act="go" data-r="settings" style="margin-bottom:16px">← Settings</button>
+    <div class="page-head"><div><div class="label">From your Steam library</div><h1>Import games</h1></div></div>`;
+  if (!S.settings.server) return head + emptyBox('Add the helper server address in Settings first.', `<button class="btn" data-act="go" data-r="settings">Open Settings</button>`);
+  if (!steamData) { setTimeout(loadSteam); return head + `<p class="note">Opening your Steam library…</p>`; }
+  if (steamData.loading) return head + `<div class="px card empty">${toad()}<p class="muted" style="margin:0">Opening your Steam library…</p></div>`;
+  if (steamData.error) return head + emptyBox(esc(steamData.error), `<button class="btn" data-act="loadsteam">Try again</button>`);
+  const onShelf = new Set(games().map(g => String(g.steam_appid)).filter(Boolean));
+  const list = steamData.games, total = list.reduce((a, g) => a + g.hours, 0);
+  const recent = d => d && daysBetween(d, today()) <= 60;
+  return head + `
+  <p style="margin-top:0">${list.length} games · ${fmtHours(total)} hours on Steam. ${onShelf.size ? onShelf.size + ' already on your shelf.' : ''}</p>
+  <div class="px card" style="margin-bottom:18px">
+    <div class="label" style="margin-bottom:10px">Games you haven’t played in 2 months go to</div>
+    <div class="seg" id="old-status">${['active', 'finished', 'dnf', 'want'].map((s, i) => `<button class="${i === 0 ? 'on' : ''}" data-act="oldstatus" data-s="${s}">${LABEL.game[s]}</button>`).join('')}</div>
+    <p class="note" style="margin:10px 0 0">Recently played games become <b>Playing</b>; never-played ones go to <b>Want to Play</b>. You can change any of them later.</p>
+  </div>
+  <input class="inp" type="search" placeholder="Filter…" id="steam-filter" style="margin-bottom:10px">
+  <label class="switch" style="border:0"><span class="small">Select all shown</span><input type="checkbox" data-change="impall"></label>
+  <div class="check-list" id="steam-list" style="max-height:none;margin-bottom:90px">${list.map(g => {
+    const has = onShelf.has(String(g.appid)), c = steamCovers(g.appid);
+    return `<label class="check-item" data-title="${esc(g.title.toLowerCase())}"><input type="checkbox" value="${g.appid}" ${has ? 'checked disabled' : g.hours > 0 ? 'checked' : ''}>${coverHTML({ type: 'game', title: g.title, cover_url: c[1], cover_fallbacks: c.slice(2) }, true)}
+      <span><b class="small">${esc(g.title)}</b><br><span class="small muted">${has ? 'On your shelf' : g.hours ? fmtHours(g.hours) + ' h' + (g.last_played ? ' · last played ' + fmtDate(g.last_played) : '') : 'Never played'}${!has && recent(g.last_played) ? ' · recent' : ''}</span></span></label>`;
+  }).join('')}</div>
+  <div style="position:fixed;left:0;right:0;bottom:calc(76px + var(--safe-b));padding:10px 16px;z-index:28;display:flex;justify-content:center"><button class="btn primary" data-act="doimport" style="min-width:240px">Import selected</button></div>`;
+}
+function doImport() {
+  const ids = $$('#steam-list input:checked:not(:disabled)').map(c => c.value);
+  if (!ids.length) { toast('Nothing selected'); return; }
+  const oldStatus = ($('#old-status .on') || {}).dataset?.s || 'active';
+  const byApp = new Map(steamData.games.map(g => [String(g.appid), g]));
+  ids.forEach(id => {
+    const g = byApp.get(id); if (!g) return;
+    const it = newItem('game'); const c = steamCovers(g.appid);
+    const status = !g.hours ? 'want' : (g.last_played && daysBetween(g.last_played, today()) <= 60) ? 'active' : oldStatus;
+    Object.assign(it, { title: g.title, platform: 'Steam', steam_appid: String(g.appid), cover_url: c[0], cover_fallbacks: c.slice(1), hours_played: g.hours, status, updated_at: new Date().toISOString() });
+    if (status === 'active') it.date_started = g.last_played || today();
+    if (status === 'finished') it.date_finished = g.last_played || today();
+    S.items.push(it); // past playtime isn't logged, so it doesn't count as "played this month"
+  });
+  S.settings.lastSteamSync = today();
+  commit(); sfx('jingle');
+  toast(`Imported ${ids.length} game${ids.length === 1 ? '' : 's'}`, 'Hours will keep syncing once a day', padIco());
+  go('games');
+}
+async function steamSync(manual) {
+  if (!S.settings.server || !S.settings.steamUser) return;
+  const linked = games().filter(g => g.steam_appid);
+  if (!linked.length) { S.settings.lastSteamSync = today(); save(); if (manual) toast('No Steam games on your shelf yet', 'Use Import from Steam first'); return; }
+  try {
+    const d = await api('/steam/library?user=' + encodeURIComponent(S.settings.steamUser));
+    const map = new Map(d.games.map(g => [String(g.appid), g]));
+    let added = 0, n = 0;
+    linked.forEach(it => { const g = map.get(String(it.steam_appid)); if (g && g.hours > (it.hours_played || 0) + 0.05) { added += g.hours - (it.hours_played || 0); setHours(it, g.hours); n++; } });
+    S.settings.lastSteamSync = today(); commit();
+    if (n) toast('Steam synced', `+${fmtHours(added)} h across ${n} game${n > 1 ? 's' : ''}`, padIco(), 'coin');
+    else if (manual) toast('Steam synced', 'Everything was already up to date', padIco());
+  } catch (e) { if (manual) toast('Steam sync failed', e.message); }
 }
 
 /* ---------- item mutations ---------- */
@@ -1158,6 +1262,14 @@ const A = {
   ftype: d => { const t = draft.title; draft = newItem(d.type, draft.status); draft._new = true; draft.title = t; rerenderForm(); },
   fstatus: d => { draft.status = d.s; rerenderForm(); },
   pick: d => pickResult(lastResults[+d.i]),
+  gpick: d => pickGame(gameResults[+d.i]),
+  loadsteam: () => loadSteam(),
+  oldstatus: (d, el) => $$('#old-status button').forEach(b => b.classList.toggle('on', b === el)),
+  doimport: () => doImport(),
+  steamsync: () => steamSync(true),
+  testserver: async () => { const m = $('#server-msg'); m.textContent = 'Knocking on the door…';
+    try { const h = await api('/health'); m.textContent = h.igdb && h.steam ? 'All good! Game search and Steam are both ready.' : `Connected, but missing: ${[!h.igdb && 'Twitch keys (game search)', !h.steam && 'Steam key'].filter(Boolean).join(' and ')}.`; if (h.igdb && h.steam) sfx('coin'); }
+    catch (e) { m.textContent = e.message; } },
   google: async d => { const box = $('#results'); box.innerHTML = '<p class="note">Asking Google Books…</p>'; try { lastResults = await searchGoogle(d.q); } catch (e) { lastResults = []; }
     box.innerHTML = lastResults.length ? resultsHTML(lastResults) : '<p class="note">Nothing there either — fill it in by hand.</p>'; },
   scan: () => openScanner(), closescan: () => closeScanner(), scanphoto: () => $('#file-scan').click(),
@@ -1202,7 +1314,11 @@ document.addEventListener('click', ev => {
   if (!['rate', 'buy', 'pet', 'open', 'pull', 'startsession', 'stopsession'].includes(el.dataset.act)) sfx('click');
   f(el.dataset, el, ev);
 });
-document.addEventListener('submit', ev => { const f = ev.target.closest('[data-submit="search"]'); if (!f) return; ev.preventDefault(); const q = $('#q').value; $('#q').blur(); doSearch(q); });
+document.addEventListener('submit', ev => {
+  if (ev.target.closest('[data-submit="gsearch"]')) { ev.preventDefault(); const q = $('#gq').value; $('#gq').blur(); return doGameSearch(q); }
+  const f = ev.target.closest('[data-submit="search"]'); if (!f) return; ev.preventDefault(); const q = $('#q').value; $('#q').blur(); doSearch(q);
+});
+document.addEventListener('input', ev => { if (ev.target.id === 'steam-filter') { const q = ev.target.value.toLowerCase(); $$('#steam-list .check-item').forEach(el => el.style.display = el.dataset.title.includes(q) ? '' : 'none'); } });
 document.addEventListener('input', ev => {
   const el = ev.target, k = el.dataset.input; if (!k) return;
   if (k === 'f' && draft) { draft[el.dataset.k] = el.value; if (el.dataset.k === 'title') refreshFormCover(); }
@@ -1230,6 +1346,9 @@ document.addEventListener('change', ev => {
     case 'pgoal': S.profile.yearGoal = Math.max(0, Math.round(num(el.value))); return commit();
     case 'set': S.settings[el.dataset.k] = el.checked; skyKey = ''; if (el.checked) sfx('pop'); return commit();
     case 'setsky': S.settings.sky = el.checked ? 'auto' : 'day'; skyKey = ''; return commit();
+    case 'server': S.settings.server = el.value.trim().replace(/\/+$/, ''); if (S.settings.server && !/^https?:\/\//.test(S.settings.server)) S.settings.server = 'https://' + S.settings.server; return commit();
+    case 'steamuser': S.settings.steamUser = el.value.trim(); return commit();
+    case 'impall': $$('#steam-list input[type=checkbox]').forEach(c => { if (c.closest('.check-item').style.display !== 'none' && !c.disabled) c.checked = el.checked; }); return;
   }
 });
 $('#file-cover').addEventListener('change', async ev => {
@@ -1264,6 +1383,7 @@ document.addEventListener('visibilitychange', () => { if (!document.hidden) { ap
 (async function boot() {
   S = normalize(await loadState());
   readRoute();
+  if (S.settings.server && S.settings.lastSteamSync !== today()) setTimeout(() => steamSync(false), 1500);
   try { if (navigator.storage && navigator.storage.persist) navigator.storage.persist(); } catch (e) {}
   if ('serviceWorker' in navigator && location.protocol.startsWith('http')) navigator.serviceWorker.register('sw.js').catch(() => {});
 })();

@@ -1,5 +1,5 @@
 // Ivy Shelf — offline support
-const SHELL = 'hollow-shelf-v3';
+const SHELL = 'hollow-shelf-v4';
 const RUNTIME = 'hollow-shelf-images';
 const FILES = ['./', './index.html', './js/sprites.js', './js/app.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 const IMAGE_HOSTS = ['covers.openlibrary.org', 'books.google.com', 'books.googleusercontent.com', 'steamstatic.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];

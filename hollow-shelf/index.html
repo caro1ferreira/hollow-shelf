@@ -195,6 +195,10 @@ textarea.inp{min-height:110px;resize:vertical;line-height:1.5}
 .cover-ph.game::before{left:0;right:0;top:0;bottom:auto;width:auto;height:15%;background:rgba(90,62,43,.78);border:0}
 .cover-ph.game::after{inset:20% 8% 7% 8%}
 .cover-ph.game .tag{position:absolute;top:4%;left:0;right:0;font-family:var(--pixel);font-size:clamp(5px,1.4vw,7px);color:#fff;letter-spacing:1px;z-index:1}
+:is(.check-item,.result,.mosaic,.hl,.mosaic-wall) .cover-ph .t{font-size:9px;-webkit-line-clamp:3;word-break:normal;overflow-wrap:anywhere}
+:is(.check-item,.result,.mosaic) .cover-ph :is(.orn,.a,.tag){display:none}
+:is(.check-item,.result,.mosaic) .cover-ph{padding:8% 6% 8% 16%}
+:is(.check-item,.result,.mosaic) .cover-ph.game{padding:20% 6% 6%}
 .ribbon{position:absolute;left:0;right:0;bottom:0;height:9px;background:rgba(253,246,233,.85);border-top:2px solid var(--ink)}
 .ribbon i{display:block;height:100%;background:var(--mint-deep)}
 
