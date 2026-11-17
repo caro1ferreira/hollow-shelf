@@ -1,7 +1,7 @@
 // Ivy & the Hollow Shelf — offline support
-const SHELL = 'hollow-shelf-v1';
+const SHELL = 'hollow-shelf-v2';
 const RUNTIME = 'hollow-shelf-images';
-const FILES = ['./', './index.html', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
+const FILES = ['./', './index.html', './js/sprites.js', './js/app.js', './manifest.webmanifest', './icons/icon-192.png', './icons/icon-512.png', './icons/apple-touch-icon.png'];
 const IMAGE_HOSTS = ['covers.openlibrary.org', 'books.google.com', 'books.googleusercontent.com', 'steamstatic.com', 'fonts.googleapis.com', 'fonts.gstatic.com'];
 
 self.addEventListener('install', e => {
@@ -14,16 +14,12 @@ self.addEventListener('fetch', e => {
   const req = e.request;
   if (req.method !== 'GET') return;
   const url = new URL(req.url);
-
-  // App pages: try the network first so updates arrive, fall back to the saved copy offline
-  if (req.mode === 'navigate') {
-    e.respondWith(fetch(req).then(r => { const copy = r.clone(); caches.open(SHELL).then(c => c.put('./index.html', copy)); return r; })
-      .catch(() => caches.match('./index.html')));
-    return;
-  }
-  // Own files: saved copy first
+  // App files: network first so updates arrive quickly, saved copy when offline
   if (url.origin === location.origin) {
-    e.respondWith(caches.match(req).then(hit => hit || fetch(req)));
+    e.respondWith(fetch(req).then(r => {
+      if (r.ok) { const copy = r.clone(); caches.open(SHELL).then(c => c.put(req.mode === 'navigate' ? './index.html' : req, copy)); }
+      return r;
+    }).catch(() => caches.match(req.mode === 'navigate' ? './index.html' : req).then(hit => hit || caches.match(req, { ignoreSearch: true }))));
     return;
   }
   // Covers and fonts: keep a copy so the shelf looks right offline
@@ -36,5 +32,4 @@ self.addEventListener('fetch', e => {
       return r;
     }));
   }
-  // Everything else (book searches) goes straight to the network
 });
