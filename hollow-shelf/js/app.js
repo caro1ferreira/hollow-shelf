@@ -1129,7 +1129,7 @@ function importBackup(file) {
     try {
       const data = JSON.parse(r.result); if (!data || !Array.isArray(data.items)) throw new Error('bad');
       askConfirm(`Replace everything on this device with the backup (${data.items.length} items)?`, () => { S = normalize(data); $('#companion-root').dataset.c = ''; skyKey = ''; commit(); toast('Backup restored'); }, 'Restore', false);
-    } catch (e) { toast('That file isn’t a Ivy Shelf backup'); }
+    } catch (e) { toast('That file isn’t an Ivy Shelf backup'); }
   };
   r.readAsText(file);
 }
