@@ -98,12 +98,12 @@ function sfx(n) { if (S.settings.sound) try { SFX[n](); } catch (e) {} }
 /* ---------- state & storage ---------- */
 const USER_ID = 'local-user';
 const blank = () => ({
-  version: 2, user_id: USER_ID, profile: { name: 'Carol', yearGoal: 24 },
+  version: 2, user_id: USER_ID, profile: { name: '', yearGoal: 24 },
   items: [], collections: [], journal: [], logs: [], achievements: {},
   quotes: [], sessions: [], session: null, spent: 0,
   shop: { owned: ['default'], hat: '', neck: '', decor: [], theme: 'default', companion: '' },
   settings: { sound: true, sky: 'auto', seasons: true, shelfView: { book: 'grid', game: 'grid' },
-    server: 'https://ivy-shelf.anacarolina-ferr.workers.dev', steamUser: 'https://steamcommunity.com/id/redfiexd/', lastSteamSync: '' }
+    server: 'https://ivy-shelf.anacarolina-ferr.workers.dev', steamUser: '', lastSteamSync: '' }
 });
 let S = blank();
 let storageOK = true;
