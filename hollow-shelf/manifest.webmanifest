@@ -1,6 +1,6 @@
 {
-  "name": "Ivy & the Hollow Shelf",
-  "short_name": "Hollow Shelf",
+  "name": "Ivy Shelf",
+  "short_name": "Ivy Shelf",
   "description": "A cozy tracker for the books you read and the games you play.",
   "start_url": "./",
   "scope": "./",

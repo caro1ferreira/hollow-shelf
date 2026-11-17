@@ -1,5 +1,5 @@
 'use strict';
-/* Ivy & the Hollow Shelf — original pixel sprites, drawn as SVG rectangles. */
+/* Ivy Shelf — original pixel sprites, drawn as SVG rectangles. */
 const INK = '#5a3e2b';
 function pix(rows, pal, cls = '', attrs = '') {
   const w = Math.max(...rows.map(r => r.length)), h = rows.length; let r = '';

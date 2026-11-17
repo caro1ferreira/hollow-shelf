@@ -1,6 +1,6 @@
 'use strict';
 /* =====================================================================
-   Ivy & the Hollow Shelf — personal book & game tracker (v2)
+   Ivy Shelf — personal book & game tracker (v2)
    Data lives in this device's IndexedDB. Sprites come from sprites.js.
    ===================================================================== */
 
@@ -389,11 +389,11 @@ function navKey() {
 function renderShell() {
   const p = progressNumbers(), k = navKey();
   $('#sidebar').innerHTML = `
-    <div class="side-brand">${toad('toad', toadMood())}<div class="brand-title">Ivy &amp; the Hollow Shelf</div><div class="brand-sub" style="margin-top:6px">BOOKS · GAMES · COZY</div></div>
+    <div class="side-brand">${toad('toad', toadMood())}<div class="brand-title">Ivy Shelf</div><div class="brand-sub" style="margin-top:6px">BOOKS · GAMES · COZY</div></div>
     <div class="px card side-level parch">${levelBox(p)}</div>
     <nav>${NAV.map(([id, n, ico]) => `<button class="nav-cloud ${k === id ? 'on' : ''}" data-act="go" data-r="${id}">${ico()}${n}</button>`).join('')}</nav>`;
   $('#topbar').innerHTML = `
-    <div class="brand"><div class="brand-title">Ivy &amp; the Hollow Shelf</div><div class="brand-sub">LV ${p.level} · ${p.into}/${p.need} XP</div></div>
+    <div class="brand"><div class="brand-title">Ivy Shelf</div><div class="brand-sub">LV ${p.level} · ${p.into}/${p.need} XP</div></div>
     <button class="chip-stat" data-act="go" data-r="shop" aria-label="Acorn shop">${acorn()}${p.acorns}</button>`;
   const tabs = [['home', 'Home', homeIco], ['books', 'Books', bookIco], ['games', 'Games', padIco], ['journal', 'Journal', quillIco], ['more', 'More', moreIco]];
   const onMore = ['wishlist', 'collections', 'stats', 'settings', 'shop'].includes(k);
@@ -719,7 +719,7 @@ function viewReview(y) {
   const achs = ACH.filter(a => (S.achievements[a.id] || '').startsWith(String(y)));
   const hl = (label, it, extra) => it ? `<div class="px hl">${coverHTML(it, true)}<div><div class="label">${label}</div><b>${esc(it.title)}</b><div class="small muted">${extra || ''}</div></div></div>` : '';
   return `<button class="link" data-act="go" data-r="stats" style="margin-bottom:16px">← Stats</button>
-  <div class="px review-hero pink">${toad('toad', 'party')}<div class="label">The Hollow Shelf presents</div><h1 style="margin-top:8px">${esc(S.profile.name || 'Your')}’s ${y}</h1><p class="muted" style="margin:8px 0 0">A year of pages, quests and quiet evenings.</p></div>
+  <div class="px review-hero pink">${toad('toad', 'party')}<div class="label">Ivy Shelf presents</div><h1 style="margin-top:8px">${esc(S.profile.name || 'Your')}’s ${y}</h1><p class="muted" style="margin:8px 0 0">A year of pages, quests and quiet evenings.</p></div>
   <div class="stats4" style="margin-top:22px">
     <div class="px stat"><div class="label">Books finished</div><div class="big-num">${d.fb.length}</div></div>
     <div class="px stat"><div class="label">Pages turned</div><div class="big-num">${Math.round(d.pages).toLocaleString('en-GB')}</div></div>
@@ -791,7 +791,7 @@ function viewSettings() {
   <div class="px card"><p style="margin:0">Paste a Steam store link when adding a game and its cover appears automatically. Game search by name and automatic playtime sync are coming in the next phase.</p></div>
   <div class="section"><h2>Danger zone</h2></div>
   <div class="px card"><button class="btn danger" data-act="wipe">Erase everything</button></div>
-  <p class="note" style="margin-top:22px;text-align:center">Ivy &amp; the Hollow Shelf · v2 · book data from Open Library &amp; Google Books</p>`;
+  <p class="note" style="margin-top:22px;text-align:center">Ivy Shelf · v2.1 · book data from Open Library &amp; Google Books</p>`;
 }
 
 /* ---------- modal, toasts, celebration ---------- */
@@ -1117,9 +1117,9 @@ function equip(id, quiet) {
 
 /* ---------- backup ---------- */
 async function exportBackup() {
-  const json = JSON.stringify(S, null, 1), name = `hollow-shelf-backup-${today()}.json`;
+  const json = JSON.stringify(S, null, 1), name = `ivy-shelf-backup-${today()}.json`;
   const file = new File([json], name, { type: 'application/json' });
-  try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Hollow Shelf backup' }); return; } } catch (e) { if (e.name === 'AbortError') return; }
+  try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Ivy Shelf backup' }); return; } } catch (e) { if (e.name === 'AbortError') return; }
   const a = document.createElement('a'); a.href = URL.createObjectURL(file); a.download = name; document.body.appendChild(a); a.click();
   setTimeout(() => { URL.revokeObjectURL(a.href); a.remove(); }, 2000);
 }
@@ -1129,7 +1129,7 @@ function importBackup(file) {
     try {
       const data = JSON.parse(r.result); if (!data || !Array.isArray(data.items)) throw new Error('bad');
       askConfirm(`Replace everything on this device with the backup (${data.items.length} items)?`, () => { S = normalize(data); $('#companion-root').dataset.c = ''; skyKey = ''; commit(); toast('Backup restored'); }, 'Restore', false);
-    } catch (e) { toast('That file isn’t a Hollow Shelf backup'); }
+    } catch (e) { toast('That file isn’t a Ivy Shelf backup'); }
   };
   r.readAsText(file);
 }
