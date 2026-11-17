@@ -1,0 +1,15 @@
+{
+  "name": "Ivy & the Hollow Shelf",
+  "short_name": "Hollow Shelf",
+  "description": "A cozy tracker for the books you read and the games you play.",
+  "start_url": "./",
+  "scope": "./",
+  "display": "standalone",
+  "orientation": "portrait",
+  "background_color": "#fdf6e9",
+  "theme_color": "#f6c9d3",
+  "icons": [
+    { "src": "icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
