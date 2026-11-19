@@ -44,7 +44,35 @@ const QUOTES = [
   ['A room without books is like a body without a soul.', 'attributed to Cicero'],
   ['Kind hearts are the gardens, kind thoughts are the roots.', 'Henry Wadsworth Longfellow']
 ];
+const SPECIAL_THEMES = {
+  moonlit: { name: 'Moonlit library', dark: true, meta: '#101530', sw: ['#262a55', '#d9cdf2', '#f2d58a'], fx: ['stars', 'glow'] },
+  forest: { name: 'Enchanted forest', dark: false, meta: '#bcdcb0', sw: ['#5f8f4a', '#cde3b8', '#f2d0a0'], fx: ['greenleaves', 'fireflies'] },
+  strawberry: { name: 'Strawberry field', dark: false, meta: '#ffd4da', sw: ['#df3e57', '#ffc6cf', '#cfe8c0'], fx: ['petals', 'berries'] },
+  witchy: { name: 'Autumn witch', dark: true, meta: '#24183a', sw: ['#3e2852', '#d9c2ef', '#f6c08a'], fx: ['witchleaves', 'stars'] },
+  midnight: { name: 'Midnight hour', dark: true, game: true, meta: '#020a14', sw: ['#06213a', '#1f5fbf', '#3fd6d0'], fx: ['bubbles', 'stars'] },
+  foggy: { name: 'Foggy town', dark: false, game: true, meta: '#ffd60a', sw: ['#ffe22e', '#1b1b1b', '#ff9f1c'], fx: ['fog'] },
+  phantom: { name: 'Phantom heart', dark: true, game: true, meta: '#d0101a', sw: ['#d0101a', '#111111', '#ffffff'], fx: ['shards'] },
+  neon: { name: 'Neon city', dark: true, game: true, meta: '#07080b', sw: ['#0b0c10', '#f3e600', '#00e5ff'], fx: ['rain'] }
+};
 const SHOP = [
+  ...Object.entries(MASCOTS).map(([id, m]) => ({ id, cat: 'mascot', name: m.name, price: 0 })),
+  ...Object.entries(SPECIAL_THEMES).map(([id, t]) => ({ id, cat: 'special', name: t.name, price: 0, sw: t.sw })),
+  { id: 'glasses', cat: 'outfit', name: 'Round glasses', price: 20 },
+  { id: 'book', cat: 'outfit', name: 'A good book', price: 20 },
+  { id: 'beret', cat: 'outfit', name: 'Reading beret', price: 25 },
+  { id: 'lantern', cat: 'outfit', name: 'Little lantern', price: 30 },
+  { id: 'headphones', cat: 'outfit', name: 'Headphones', price: 30 },
+  { id: 'controller', cat: 'outfit', name: 'Controller', price: 25 },
+  { id: 'cap', cat: 'outfit', name: 'Gamer cap', price: 25 },
+  { id: 'goldcrown', cat: 'outfit', name: 'Pixel crown', price: 60 },
+  { id: 'straw', cat: 'outfit', name: 'Straw hat', price: 30 },
+  { id: 'daisy', cat: 'outfit', name: 'Daisy chain', price: 25 },
+  { id: 'basket', cat: 'outfit', name: 'Picnic basket', price: 25 },
+  { id: 'apron', cat: 'outfit', name: 'Garden apron', price: 30 },
+  { id: 'witch', cat: 'outfit', name: 'Witch hat', price: 45 },
+  { id: 'wings', cat: 'outfit', name: 'Fairy wings', price: 60 },
+  { id: 'cape', cat: 'outfit', name: 'Wizard cape', price: 50 },
+  { id: 'halo', cat: 'outfit', name: 'Halo', price: 40 },
   { id: 'mushroom', cat: 'outfit', name: 'Mushroom cap', price: 30 },
   { id: 'bow', cat: 'outfit', name: 'Pink bow', price: 20 },
   { id: 'crown', cat: 'outfit', name: 'Flower crown', price: 40 },
@@ -66,7 +94,9 @@ const SHOP = [
   { id: 'snail', cat: 'companion', name: 'Snail', price: 70 },
   { id: 'bird', cat: 'companion', name: 'Bluebird', price: 90 }
 ];
-const SHOP_CATS = [['outfit', 'Toad outfits'], ['decor', 'Shelf decorations'], ['theme', 'Colour themes'], ['companion', 'Companions']];
+const SHOP_CATS = [['mascot', 'Friends'], ['outfit', 'Outfits'], ['decor', 'Decorations'], ['special', 'Special themes'], ['theme', 'Colour themes'], ['companion', 'Companions']];
+const OUTFIT_SETS = [['classic', 'Classics'], ['reading', 'For reading'], ['gaming', 'For gaming'], ['cottage', 'Cottagecore'], ['fantasy', 'Fantasy']];
+
 const MAX_DECOR = 4;
 
 /* ---------- sound (synthesised, no files) ---------- */
@@ -101,7 +131,7 @@ const blank = () => ({
   version: 2, user_id: USER_ID, profile: { name: '', yearGoal: 24 },
   items: [], collections: [], journal: [], logs: [], achievements: {},
   quotes: [], sessions: [], session: null, spent: 0,
-  shop: { owned: ['default'], hat: '', neck: '', decor: [], theme: 'default', companion: '' },
+  shop: { owned: ['default'], mascot: 'toad', hat: '', neck: '', face: '', ears: '', back: '', hand: '', body: '', halo: '', decor: [], theme: 'default', companion: '' },
   settings: { sound: true, sky: 'auto', seasons: true, shelfView: { book: 'grid', game: 'grid' },
     server: 'https://ivy-shelf.anacarolina-ferr.workers.dev', steamUser: '', lastSteamSync: '' }
 });
@@ -214,7 +244,9 @@ function toadMood() {
   const last = lastActivity();
   return last && daysBetween(last, today()) >= 3 ? 'sleep' : 'awake';
 }
-const toad = (cls = 'toad', mood = '') => toadSVG({ hat: S.shop.hat, neck: S.shop.neck, mood }, cls + (mood === 'sleep' ? ' sleep' : ''));
+const mascot = () => MASCOTS[S.shop.mascot] || MASCOTS.toad;
+const outfit = () => { const o = { mascot: S.shop.mascot }; SLOTS.forEach(k => { if (S.shop[k]) o[k] = S.shop[k]; }); return o; };
+const toad = (cls = 'toad', mood = '') => mascotSVG({ ...outfit(), mood }, cls + (mood === 'sleep' ? ' sleep' : ''));
 function toadLine() {
   const mood = toadMood(), d = dayOfYear();
   if (mood === 'sleep') return 'Zzz… oh! You’re back! I kept your spot warm.';
@@ -226,7 +258,7 @@ function toadLine() {
   pg.forEach(g => lines.push(`Off on an adventure in <i>${esc(g.title)}</i> today?`));
   const fin = S.items.filter(i => i.status === 'finished' && i.date_finished && daysBetween(i.date_finished, today()) <= 2);
   if (fin.length) return `Still thinking about <i>${esc(fin[0].title)}</i>. What a finish!`;
-  ['The kettle is on. What are we reading today?', 'A page a day keeps the gloom away.', 'Ribbit. I saved you a cozy spot on the shelf.', 'One more chapter? I won’t tell anyone.', 'Rainy days are for long books and longer games.', 'Remember to stretch between levels!'].forEach(l => lines.push(l));
+  ['The kettle is on. What are we reading today?', 'A page a day keeps the gloom away.', `${mascot().sound}! I saved you a cozy spot on the shelf.`, 'One more chapter? I won’t tell anyone.', 'Rainy days are for long books and longer games.', 'Remember to stretch between levels!'].forEach(l => lines.push(l));
   return lines[d % lines.length];
 }
 
@@ -330,10 +362,12 @@ function skyPhase() {
 function season() { const m = new Date().getMonth(); return m >= 8 && m <= 10 ? 'autumn' : (m === 11 || m <= 1) ? 'winter' : m <= 4 ? 'spring' : 'summer'; }
 let skyKey = '';
 function applySky() {
-  const phase = skyPhase(), key = phase + '|' + season() + '|' + S.settings.seasons + '|' + window.innerWidth;
+  const T = SPECIAL_THEMES[S.shop.theme];
+  const phase = T ? 'theme' : skyPhase(), key = phase + '|' + S.shop.theme + '|' + season() + '|' + S.settings.seasons + '|' + window.innerWidth;
   document.body.dataset.sky = phase;
+  document.body.classList.toggle('darksky', T ? T.dark : phase === 'night');
   document.documentElement.dataset.theme = S.shop.theme || 'default';
-  const tc = { morning: '#f9d4d0', day: '#d9eef8', sunset: '#f2a98f', night: '#1f2244' }[phase];
+  const tc = T ? T.meta : { morning: '#f9d4d0', day: '#d9eef8', sunset: '#f2a98f', night: '#1f2244' }[phase];
   const meta = $('meta[name=theme-color]'); if (meta) meta.content = tc;
   if (key === skyKey) return; skyKey = key;
   const sky = $('#sky'); sky.innerHTML = '';
@@ -344,13 +378,14 @@ function applySky() {
     c.style.cssText = `top:${4 + Math.random() * 38}%;width:${w}px;animation-duration:${dur}s;animation-delay:${-Math.random() * dur}s;opacity:${.55 + Math.random() * .4}`;
     sky.appendChild(c);
   }
-  if (phase === 'night') {
+  if (phase === 'night' || (T && T.fx.includes('stars'))) {
     const f = document.createElement('div'); f.className = 'starfield';
     for (let i = 0; i < 46; i++) { const s = document.createElement('i'); s.style.cssText = `left:${Math.random() * 100}%;top:${Math.random() * 70}%;animation-delay:${-Math.random() * 3}s;opacity:${.4 + Math.random() * .6}`; f.appendChild(s); }
     sky.appendChild(f);
   }
   const w = $('#weather'); w.innerHTML = '';
   if (!S.settings.seasons) return;
+  if (T) return themeFx(T, w);
   const se = season(), count = window.innerWidth < 700 ? 10 : 18;
   const leafColors = ['#d98a5f', '#e0a24a', '#c86a4a', '#b9823c'];
   if (se === 'autumn' || se === 'winter' || se === 'spring') {
@@ -365,6 +400,29 @@ function applySky() {
   if (phase === 'night' && (se === 'summer' || se === 'spring')) {
     for (let i = 0; i < 12; i++) { const f = document.createElement('div'); f.className = 'fly'; f.style.cssText = `left:${Math.random() * 90}%;top:${40 + Math.random() * 50}%;animation-delay:${-Math.random() * 9}s;animation-duration:${6 + Math.random() * 6}s`; w.appendChild(f); }
   }
+}
+function themeFx(T, w) {
+  const count = window.innerWidth < 700 ? 10 : 18, R = Math.random;
+  const falling = (html, n = count, size = [10, 16], dur = [12, 26]) => { for (let i = 0; i < n; i++) {
+    const p = document.createElement('div'); p.className = 'p'; p.innerHTML = typeof html === 'function' ? html(i) : html; const d = dur[0] + R() * (dur[1] - dur[0]);
+    p.style.cssText = `left:${R() * 100}%;width:${size[0] + R() * (size[1] - size[0])}px;animation-duration:${d}s;animation-delay:${-R() * d}s;opacity:${.55 + R() * .4}`; w.appendChild(p); } };
+  const flies = (n, color) => { for (let i = 0; i < n; i++) { const f = document.createElement('div'); f.className = 'fly'; if (color) f.style.background = color;
+    f.style.cssText += `;left:${R() * 92}%;top:${15 + R() * 75}%;animation-delay:${-R() * 9}s;animation-duration:${6 + R() * 6}s`; w.appendChild(f); } };
+  T.fx.forEach(fx => {
+    if (fx === 'glow') flies(10);
+    if (fx === 'fireflies') flies(14);
+    if (fx === 'greenleaves') falling(i => LEAF(['#7cc4a0', '#5f8f4a', '#a6d08a'][i % 3]));
+    if (fx === 'witchleaves') falling(i => LEAF(['#e07a2e', '#9a6fd1', '#c8743f'][i % 3]));
+    if (fx === 'petals') falling(PETAL(), count, [8, 12]);
+    if (fx === 'berries') falling(BERRY(), Math.round(count / 2), [9, 13], [16, 30]);
+    if (fx === 'shards') falling(i => SHARD(i % 3 ? '#111111' : '#ffffff'), count, [10, 18], [9, 18]);
+    if (fx === 'bubbles') for (let i = 0; i < count; i++) { const b = document.createElement('div'); b.className = 'bub'; const d = 14 + R() * 16;
+      b.style.cssText = `left:${R() * 100}%;width:${5 + R() * 8}px;height:${5 + R() * 8}px;animation-duration:${d}s;animation-delay:${-R() * d}s`; w.appendChild(b); }
+    if (fx === 'fog') for (let i = 0; i < 6; i++) { const f = document.createElement('div'); f.className = 'fogp'; const d = 50 + R() * 50;
+      f.style.cssText = `top:${R() * 85}%;animation-duration:${d}s;animation-delay:${-R() * d}s;transform:scale(${.8 + R() * 1.2})`; w.appendChild(f); }
+    if (fx === 'rain') for (let i = 0; i < count * 2; i++) { const r = document.createElement('div'); r.className = 'rainp'; const d = 1.2 + R() * 1.6;
+      r.style.cssText = `left:${R() * 100}%;animation-duration:${d}s;animation-delay:${-R() * d}s;opacity:${.25 + R() * .5}`; if (i % 5 === 0) r.style.background = 'linear-gradient(#ff2a6d00,#ff2a6d)'; w.appendChild(r); }
+  });
 }
 function renderCompanion() {
   const r = $('#companion-root'), c = S.shop.companion;
@@ -580,7 +638,7 @@ function viewItem(id) {
 
   <div class="section"><h2>Review</h2></div>
   ${fin ? `<textarea class="inp" placeholder="What did you think?" data-change="review" data-id="${id}">${esc(it.review || '')}</textarea>`
-    : `<div class="lockbox">${lockIco()}<div><b>Locked until ${B ? 'read' : 'completed'}</b><div class="small muted">Finish it first, then come back and tell the toad everything.</div></div></div>`}
+    : `<div class="lockbox">${lockIco()}<div><b>Locked until ${B ? 'read' : 'completed'}</b><div class="small muted">Finish it first, then come back and tell ${mascot().the} everything.</div></div></div>`}
 
   <div class="section"><h2>Favourite lines</h2><button class="link" data-act="newquote" data-id="${id}">+ Add</button></div>
   ${quotes.length ? `<div class="stack">${quotes.map(q => quoteCard(q)).join('')}</div>` : `<p class="note">Save a line you loved — it may turn up as the quote of the day.</p>`}
@@ -646,8 +704,8 @@ function viewJournal() {
 function barChart(vals, color, unit) {
   const W = 360, H = 150, max = Math.max(1, ...vals), bw = W / 12;
   return `<svg class="chart" viewBox="0 0 ${W} ${H + 22}" shape-rendering="crispEdges">
-    <line x1="0" y1="${H}" x2="${W}" y2="${H}" stroke="${INK}" stroke-width="2"/>
-    ${vals.map((v, i) => { const h = Math.round(v / max * (H - 18)); return `<g><title>${MONTHS[i]}: ${unit === 'h' ? fmtHours(v) + ' h' : Math.round(v) + ' pages'}</title><rect x="${i * bw + 5}" y="${H - h}" width="${bw - 10}" height="${h}" fill="${color}" stroke="${INK}" stroke-width="2"/>${v ? `<text x="${i * bw + bw / 2}" y="${H - h - 5}" font-size="9" text-anchor="middle" fill="${INK}" font-family="EB Garamond">${unit === 'h' ? fmtHours(v) : Math.round(v)}</text>` : ''}<text x="${i * bw + bw / 2}" y="${H + 16}" font-size="10" text-anchor="middle" fill="#8a6a52" font-family="EB Garamond">${MONTHS[i][0]}</text></g>`; }).join('')}
+    <line x1="0" y1="${H}" x2="${W}" y2="${H}" stroke="currentColor" stroke-width="2"/>
+    ${vals.map((v, i) => { const h = Math.round(v / max * (H - 18)); return `<g><title>${MONTHS[i]}: ${unit === 'h' ? fmtHours(v) + ' h' : Math.round(v) + ' pages'}</title><rect x="${i * bw + 5}" y="${H - h}" width="${bw - 10}" height="${h}" fill="${color}" stroke="currentColor" stroke-width="2"/>${v ? `<text x="${i * bw + bw / 2}" y="${H - h - 5}" font-size="9" text-anchor="middle" fill="currentColor" font-family="EB Garamond">${unit === 'h' ? fmtHours(v) : Math.round(v)}</text>` : ''}<text x="${i * bw + bw / 2}" y="${H + 16}" font-size="10" text-anchor="middle" fill="currentColor" opacity=".65" font-family="EB Garamond">${MONTHS[i][0]}</text></g>`; }).join('')}
   </svg>`;
 }
 function achCard(a) {
@@ -753,21 +811,28 @@ function viewReview(y) {
 function viewShop() {
   const p = progressNumbers(), cat = ui.shopCat, sh = S.shop;
   const items = SHOP.filter(s => s.cat === cat);
-  const art = s => s.cat === 'outfit' ? toadSVG(OUTFITS[s.id].slot === 'hat' ? { hat: s.id } : { neck: s.id }, '')
+  const art = s => s.cat === 'outfit' ? mascotSVG({ mascot: sh.mascot, [OUTFITS[s.id].slot]: s.id }, '')
+    : s.cat === 'mascot' ? mascotSVG({ ...outfit(), mascot: s.id }, '')
     : s.cat === 'decor' ? DECOR_SPRITES[s.id] : s.cat === 'companion' ? COMPANION_SPRITES[s.id]
-    : `<div class="swatch"><i style="background:${s.sw[0]}"></i><i style="background:${s.sw[1]}"></i></div>`;
-  const isOn = s => s.cat === 'outfit' ? (sh.hat === s.id || sh.neck === s.id) : s.cat === 'decor' ? sh.decor.includes(s.id) : s.cat === 'theme' ? sh.theme === s.id : sh.companion === s.id;
-  return `<div class="page-head"><div><div class="label">Spend your acorns</div><h1>Acorn shop</h1></div><span class="chip-stat">${acorn()} ${p.acorns}</span></div>
+    : `<div class="swatch" style="grid-template-columns:repeat(${s.sw.length},1fr)">${s.sw.map(c => `<i style="background:${c}"></i>`).join('')}</div>`;
+  const isOn = s => s.cat === 'outfit' ? sh[OUTFITS[s.id].slot] === s.id : s.cat === 'mascot' ? sh.mascot === s.id : s.cat === 'decor' ? sh.decor.includes(s.id) : (s.cat === 'theme' || s.cat === 'special') ? sh.theme === s.id : sh.companion === s.id;
+  const label = (s, on) => s.cat === 'mascot' ? (on ? 'Your friend' : 'Choose') : (s.cat === 'theme' || s.cat === 'special') ? (on ? 'In use' : 'Use')
+    : on ? (s.cat === 'decor' ? 'Put away' : s.cat === 'companion' ? 'Send home' : 'Take off') : (s.cat === 'decor' ? 'Display' : s.cat === 'companion' ? 'Invite' : 'Wear');
+  const ware = s => { const owned = !s.price || sh.owned.includes(s.id), on = isOn(s);
+    return `<div class="px ware ${on ? 'on' : owned ? 'owned' : ''}"><div class="art">${art(s)}</div><b>${esc(s.name)}</b>${s.cat === 'special' && SPECIAL_THEMES[s.id].game ? '<span class="label">game-inspired</span>' : ''}
+      ${owned ? `<button class="btn sm ${on ? 'primary' : ''}" data-act="equip" data-id="${s.id}">${label(s, on)}</button>`
+        : `<div class="price">${acorn()} ${s.price}</div><button class="btn sm mint" data-act="buy" data-id="${s.id}" ${p.acorns < s.price ? 'disabled' : ''}>Buy</button>`}</div>`; };
+  const grid = cat === 'outfit'
+    ? OUTFIT_SETS.map(([set, n]) => `<div class="section"><h2>${n}</h2></div><div class="shop-grid">${items.filter(s => OUTFITS[s.id].set === set).map(ware).join('')}</div>`).join('')
+    : `<div class="shop-grid" style="margin-top:8px">${items.map(ware).join('')}</div>`;
+  return `<div class="page-head"><div><div class="label">Friends, outfits &amp; themes</div><h1>Acorn shop</h1></div><span class="chip-stat">${acorn()} ${p.acorns}</span></div>
   <div class="px card parch row" style="flex-wrap:nowrap;gap:14px;margin-bottom:18px">${toad('toad', toadMood()).replace('class="pix toad', 'style="width:64px;flex:none" class="pix toad')}<div class="small">Acorns come from finishing things (+10), reading (+1 per 50 pages), playing (+1 per hour), journaling (+2) and achievements.</div></div>
   <div class="chips">${SHOP_CATS.map(([id, n]) => `<button class="chip ${cat === id ? 'on' : ''}" data-act="shopcat" data-v="${id}">${n}</button>`).join('')}</div>
   ${cat === 'decor' ? `<p class="note" style="margin-top:0">Up to ${MAX_DECOR} decorations show in the nook and on your bookshelf.</p>` : ''}
-  <div class="shop-grid" style="margin-top:8px">${items.map(s => {
-    const owned = sh.owned.includes(s.id), on = isOn(s);
-    return `<div class="px ware ${on ? 'on' : owned ? 'owned' : ''}"><div class="art">${art(s)}</div><b>${esc(s.name)}</b>
-      ${owned ? `<button class="btn sm ${on ? 'primary' : ''}" data-act="equip" data-id="${s.id}">${on ? (s.cat === 'theme' ? 'In use' : 'Take off') : (s.cat === 'theme' ? 'Use' : s.cat === 'decor' ? 'Display' : 'Wear')}</button>`.replace('Take off', s.cat === 'decor' ? 'Put away' : s.cat === 'companion' ? 'Send home' : 'Take off')
-        : `<div class="price">${acorn()} ${s.price}</div><button class="btn sm mint" data-act="buy" data-id="${s.id}" ${p.acorns < s.price ? 'disabled' : ''}>Buy</button>`}
-    </div>`;
-  }).join('')}</div>`;
+  ${cat === 'mascot' ? `<p class="note" style="margin-top:0">Every friend is free, and every outfit fits every friend.</p>` : ''}
+  ${cat === 'special' ? `<p class="note" style="margin-top:0">Special themes are free. Each one changes the sky, colours, fonts and weather.</p>` : ''}
+  ${cat === 'outfit' ? `<p class="note" style="margin-top:0">Mix and match: one hat, plus glasses, headphones, something to hold, something on the back…</p>` : ''}
+  ${grid}`;
 }
 
 function viewSettings() {
@@ -1212,10 +1277,12 @@ function buy(id) {
   commit();
 }
 function equip(id, quiet) {
-  const s = SHOP.find(x => x.id === id), sh = S.shop; if (!s || !sh.owned.includes(id)) return;
-  if (s.cat === 'outfit') { const slot = OUTFITS[id].slot; sh[slot] = sh[slot] === id ? '' : id; }
+  const s = SHOP.find(x => x.id === id), sh = S.shop; if (!s || (s.price && !sh.owned.includes(id))) return;
+  if (s.cat === 'mascot') sh.mascot = id;
+  else if (s.cat === 'special') { sh.theme = id; skyKey = ''; }
+  else if (s.cat === 'outfit') { const slot = OUTFITS[id].slot; sh[slot] = sh[slot] === id ? '' : id; }
   else if (s.cat === 'decor') { if (sh.decor.includes(id)) sh.decor = sh.decor.filter(x => x !== id); else { sh.decor.push(id); if (sh.decor.length > MAX_DECOR) sh.decor.shift(); } }
-  else if (s.cat === 'theme') sh.theme = id;
+  else if (s.cat === 'theme') { sh.theme = id; skyKey = ''; }
   else if (s.cat === 'companion') { sh.companion = sh.companion === id ? '' : id; $('#companion-root').dataset.c = ''; }
   if (!quiet) { sfx('pop'); commit(); }
 }
