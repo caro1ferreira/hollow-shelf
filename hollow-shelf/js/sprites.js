@@ -199,3 +199,41 @@ const SNOW = () => pix(['..w..', '.w.w.', 'w.w.w', '.w.w.', '..w..'], { w: '#fff
 const PETAL = () => pix(['.pp.', 'pppp', '.pp.'], { p: '#f6c9d3' });
 const BERRY = () => pix(['.gg.', 'rrrr', 'ryrr', 'rrrr', '.rr.'], { g: '#5fa84f', r: '#df3e57', y: '#ffd6dc' });
 const SHARD = (c) => pix(['...y...', '...y...', 'yyyyyyy', '.yyyyy.', '..yyy..', '.yy.yy.', 'y.....y'], { y: c });
+
+/* ---------- seasonal event outfits ---------- */
+Object.assign(HATS, {
+  pumpkin: { pal: { g: '#5fa84f', o: '#c8602a', O: '#f08a3c' }, rows: ['....gg...', '..ooooo..', '.oOoOoOo.', 'oOoOoOoOo', 'oOoOoOoOo', '.ooooooo.'] },
+  santahat: { pal: { w: '#ffffff', r: '#d9434e' }, rows: ['......ww.', '....rrrw.', '..rrrrr..', '.rrrrrrr.', 'wwwwwwwww'] },
+  blossom: { pal: { p: '#f6b8c8', w: '#ffffff', g: '#7cc4a0' }, rows: ['.p...p...p.', 'pwp.pwp.pwp', '.g...g...g.'] },
+  sunhat: { pal: { o: INK, y: '#f6d77a', b: '#8fcfa8' }, rows: ['...oooooo...', '..oyyyyyyo..', '..obbbbbbo..', 'oyyyyyyyyyyo', '.oooooooooo.'] }
+});
+Object.assign(HAND_ITEMS, {
+  cocoa: { pal: { o: INK, s: '#e9e2da', b: '#d9434e', c: '#7a4a2e' }, rows: ['.s.s...', 'ooooo..', 'occcooo', 'obbbo.o', 'obbbooo', '.ooo...'] },
+  icecream: { pal: { p: '#f6b8c8', m: '#9fd8b8', y: '#e8b56a' }, rows: ['.pp.', 'pppp', 'mmmm', '.yy.', '.yy.', '..y.'] }
+});
+Object.assign(OUTFITS, {
+  pumpkin: { slot: 'hat', set: 'seasonal' }, santahat: { slot: 'hat', set: 'seasonal' }, cocoa: { slot: 'hand', set: 'seasonal' },
+  blossom: { slot: 'hat', set: 'seasonal' }, sunhat: { slot: 'hat', set: 'seasonal' }, icecream: { slot: 'hand', set: 'seasonal' }
+});
+
+/* ---------- the friend's room (unlocks with level) ---------- */
+const ROOM_SPRITES = {
+  window: pix(['oooooooooooooo', 'oppbbbbobbbppo', 'oppbbbbobbbppo', 'oppbbbbobbbppo', 'oppooooooooppo', 'oppbbbbobbbppo', 'oppbbbbobbbppo', 'opppbbbobbpppo', 'oooooooooooooo', '.wwwwwwwwwwww.'],
+    { o: INK, p: '#f29bb2', b: '#cfe8f5', w: '#a0714f' }, 'room-window'),
+  frame: pix(['oooooooooo', 'obbbbbbbbo', 'obbbybbbbo', 'obbbbbgbbo', 'obggbgggbo', 'oggggggggo', 'oooooooooo'], { o: '#a0714f', b: '#d6ecf6', y: '#ecc66f', g: '#8fcfa8' }),
+  bookcase: pix(['oooooooooooooo', 'odpmylpdmylpdo', 'odpmylpdmylpdo', 'odpmylpdmylpdo', 'oooooooooooooo', 'odlpymdlpmydlo', 'odlpymdlpmydlo', 'odlpymdlpmydlo',
+    'oooooooooooooo', 'odymlpdymlpddo', 'odymlpdymlpddo', 'odymlpdymlpddo', 'oooooooooooooo', 'oo..........oo'],
+    { o: INK, d: '#74503a', p: '#f29bb2', m: '#8fcfa8', y: '#ecc66f', l: '#ddd0f0' }),
+  lamp: pix(['..ooooo..', '.oyyyyyo.', 'oyyyyyyyo', 'ooooooooo', '....o....', '....o....', '....o....', '....o....', '....o....', '....o....', '..ooooo..'], { o: INK, y: '#fff3c4' }, 'flicker'),
+  armchair: pix(['..oooooooooo..', '.orrrrrrrrrro.', '.orrrrrrrrrro.', 'oorrrrrrrrrroo', 'orroooooooorro', 'orrccccccccrro', 'orrrrrrrrrrrro', 'oooooooooooooo', '.o..........o.'],
+    { o: INK, r: '#9fd8b8', c: '#e6f6ec' }),
+  fireplace: pix(['oooooooooooooooo', 'osssssssssssssso', 'oooooooooooooooo', '.osssssssssssso.', '.osooooooooooso.', '.osokkkkkkkkoso.', '.osokkkyykkkoso.', '.osokkyffykkoso.',
+    '.osokyfffyykoso.', '.osokffffffffoso', '.osobbbbbbbboso.', '.osssssssssssso.', 'oooooooooooooooo'],
+    { o: INK, s: '#cbbfb3', k: '#3a2c22', y: '#ffd166', f: '#f08a3c', b: '#8a5a3b' }, 'flicker'),
+  lights: pix(['ooo.....ooooo.....ooooo.....ooo', '...ooooo.....ooooo.....ooooo...', '....y....p.....m....y.....p....'], { o: INK, y: '#ffd166', p: '#f29bb2', m: '#8fcfa8' }, 'twinkle'),
+  bigplant: pix(['...g...g....', '..ggg.ggg...', '.gGggggGgg..', 'ggGgg.gGggg.', '.ggg.ggggg..', '..gg.ggg....', '...ggg......', '....g.......', '..oooooo....', '..otttto....', '..otttto....', '...oooo.....'],
+    { g: '#7cc4a0', G: '#5f8f4a', o: INK, t: '#d98a5f' })
+};
+const stickerIco = () => pix(['.oooooo.', 'oppppppo', 'opwwpppo', 'opwppppo', 'opppppoo', 'oppppo.o', '.oooo.o.'], { o: INK, p: '#f6c9d3', w: '#ffffff' });
+const jarIco = () => pix(['.oooooo.', '.obbbbo.', 'oooooooo', 'og.a..go', 'og..a.go', 'oga.a.go', 'ogaaaago', '.oooooo.'], { o: INK, b: '#8a5a3b', g: '#e8f4f8', a: '#d9a066' });
+const roomIco = () => pix(['....o....', '...ooo...', '..ooooo..', '.o.....o.', 'o..y.y..o', 'o..yyy..o', 'o.......o', 'ooooooooo'], { o: INK, y: '#ecc66f' });

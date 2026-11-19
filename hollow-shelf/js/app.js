@@ -73,6 +73,12 @@ const SHOP = [
   { id: 'wings', cat: 'outfit', name: 'Fairy wings', price: 60 },
   { id: 'cape', cat: 'outfit', name: 'Wizard cape', price: 50 },
   { id: 'halo', cat: 'outfit', name: 'Halo', price: 40 },
+  { id: 'pumpkin', cat: 'outfit', name: 'Pumpkin hat', price: 0, event: 'Spooky season' },
+  { id: 'santahat', cat: 'outfit', name: 'Winter hat', price: 0, event: 'Winter fair' },
+  { id: 'cocoa', cat: 'outfit', name: 'Hot cocoa', price: 0, event: 'Winter fair' },
+  { id: 'blossom', cat: 'outfit', name: 'Blossom crown', price: 0, event: 'Spring bloom' },
+  { id: 'sunhat', cat: 'outfit', name: 'Sun hat', price: 0, event: 'Summer days' },
+  { id: 'icecream', cat: 'outfit', name: 'Ice cream', price: 0, event: 'Summer days' },
   { id: 'mushroom', cat: 'outfit', name: 'Mushroom cap', price: 30 },
   { id: 'bow', cat: 'outfit', name: 'Pink bow', price: 20 },
   { id: 'crown', cat: 'outfit', name: 'Flower crown', price: 40 },
@@ -95,7 +101,7 @@ const SHOP = [
   { id: 'bird', cat: 'companion', name: 'Bluebird', price: 90 }
 ];
 const SHOP_CATS = [['mascot', 'Friends'], ['outfit', 'Outfits'], ['decor', 'Decorations'], ['special', 'Special themes'], ['theme', 'Colour themes'], ['companion', 'Companions']];
-const OUTFIT_SETS = [['classic', 'Classics'], ['reading', 'For reading'], ['gaming', 'For gaming'], ['cottage', 'Cottagecore'], ['fantasy', 'Fantasy']];
+const OUTFIT_SETS = [['classic', 'Classics'], ['reading', 'For reading'], ['gaming', 'For gaming'], ['cottage', 'Cottagecore'], ['fantasy', 'Fantasy'], ['seasonal', 'Seasonal prizes']];
 
 const MAX_DECOR = 4;
 
@@ -178,6 +184,8 @@ function normalize(s) {
   out.settings.shelfView = Object.assign({ book: 'grid', game: 'grid' }, out.settings.shelfView || {});
   if (!out.settings.server) out.settings.server = 'https://ivy-shelf.anacarolina-ferr.workers.dev';
   out.spent = +out.spent || 0;
+  out.bonus = +out.bonus || 0;
+  if (!out.quests || typeof out.quests !== 'object') out.quests = {};
   out.version = 2;
   return out;
 }
@@ -220,12 +228,12 @@ const ACH = [
   { id: 'shopper', name: 'Treat Yourself', desc: 'Buy something in the shop', xp: 10, ac: 0, t: () => S.shop.owned.length > 1 }
 ];
 function progressNumbers() {
-  const pages = Math.max(0, sumLogs('pages')), hours = Math.max(0, sumLogs('hours'));
-  const fin = S.items.filter(i => i.status === 'finished').length;
+  const pages = Math.max(0, sumLogs('pages', l => !l.imported)), hours = Math.max(0, sumLogs('hours', l => !l.imported));
+  const fin = S.items.filter(i => i.status === 'finished' && !i.imported).length;
   const reviews = S.items.filter(i => i.status === 'finished' && (i.review || '').trim()).length;
   const unlocked = ACH.filter(a => S.achievements[a.id]);
   const xp = Math.floor(pages / 5) + Math.floor(hours * 10) + fin * 100 + reviews * 25 + S.journal.length * 15 + S.quotes.length * 5 + unlocked.reduce((a, x) => a + x.xp, 0);
-  const earned = fin * 10 + S.journal.length * 2 + Math.floor(pages / 50) + Math.floor(hours) + unlocked.reduce((a, x) => a + x.ac, 0);
+  const earned = fin * 10 + S.journal.length * 2 + Math.floor(pages / 50) + Math.floor(hours) + unlocked.reduce((a, x) => a + x.ac, 0) + (S.bonus || 0);
   let level = 1, need = 100, into = xp;
   while (into >= need) { into -= need; level++; need = Math.round(need * 1.2); }
   return { xp, level, into, need, earned, acorns: Math.max(0, earned - S.spent) };
@@ -235,7 +243,7 @@ function checkAchievements() {
     if (!S.achievements[a.id] && a.t()) { S.achievements[a.id] = today(); toast(`Achievement: ${a.name}`, `+${a.xp} XP${a.ac ? ` · +${a.ac} acorns` : ''}`, starIco(), 'ach'); }
   });
 }
-function commit() { checkAchievements(); save(); render(); }
+function commit() { checkAchievements(); if (typeof checkEvents === 'function') checkEvents(); save(); render(); }
 
 /* ---------- toad ---------- */
 let partyNow = false;
@@ -435,7 +443,7 @@ function renderCompanion() {
 /* ---------- UI shell ---------- */
 const NAV = [
   ['home', 'Home', homeIco], ['books', 'Library', bookIco], ['games', 'Games', padIco], ['wishlist', 'Wishlist', wishIco],
-  ['collections', 'Collections', shelfIco], ['journal', 'Journal', quillIco], ['stats', 'Stats', chartIco], ['shop', 'Acorn shop', bagIco], ['settings', 'Settings', gearIco]];
+  ['collections', 'Collections', shelfIco], ['journal', 'Journal', quillIco], ['stickers', 'Sticker book', stickerIco], ['stats', 'Stats', chartIco], ['shop', 'Acorn shop', bagIco], ['settings', 'Settings', gearIco]];
 let route = 'home';
 const ui = { books: { status: 'all', q: '', sort: 'updated', genre: '' }, games: { status: 'all', q: '', sort: 'updated', platform: '' }, journalItem: '', journalTab: 'entries', statsYear: new Date().getFullYear(), shopCat: 'outfit' };
 function go(r) { if (location.hash !== '#' + r) location.hash = r; else { route = r; render(true); } }
@@ -456,7 +464,7 @@ function renderShell() {
     <div class="brand"><div class="brand-title">Ivy Shelf</div><div class="brand-sub">LV ${p.level} · ${p.into}/${p.need} XP</div></div>
     <button class="chip-stat" data-act="go" data-r="shop" aria-label="Acorn shop">${acorn()}${p.acorns}</button>`;
   const tabs = [['home', 'Home', homeIco], ['books', 'Books', bookIco], ['games', 'Games', padIco], ['journal', 'Journal', quillIco], ['more', 'More', moreIco]];
-  const onMore = ['wishlist', 'collections', 'stats', 'settings', 'shop', 'steam'].includes(k);
+  const onMore = ['wishlist', 'collections', 'stats', 'settings', 'shop', 'steam', 'stickers'].includes(k);
   $('#tabbar').innerHTML = tabs.map(([id, n, ico]) => `<button class="${(k === id || (id === 'more' && onMore)) ? 'on' : ''}" data-act="${id === 'more' ? 'more' : 'go'}" data-r="${id}"><div class="tab-ico">${ico()}</div><span>${n}</span></button>`).join('');
   $('#fab').classList.toggle('hide', route.startsWith('item-') || route.startsWith('review-') || route === 'shop' || route === 'steam' || fabHidden);
   renderSessionPill(); renderCompanion(); applySky();
@@ -472,6 +480,7 @@ function render(scrollTop) {
   if (route.startsWith('item-')) html = viewItem(route.slice(5));
   else if (route.startsWith('collection-')) html = viewCollection(route.slice(11));
   else if (route.startsWith('review-')) html = viewReview(+route.slice(7));
+  else if (typeof EXTRA_VIEWS !== 'undefined' && EXTRA_VIEWS[route]) html = EXTRA_VIEWS[route]();
   else html = ({ steam: viewSteam, home: viewHome, books: () => viewShelf('book'), games: () => viewShelf('game'), wishlist: viewWishlist, collections: viewCollections, journal: viewJournal, stats: viewStats, shop: viewShop, settings: viewSettings }[route] || viewHome)();
   $('#main').innerHTML = (storageOK ? '' : `<div class="banner">Your device isn’t letting the app save right now. Save a backup in Settings so nothing gets lost.</div>`) + html;
   if (scrollTop) window.scrollTo(0, 0);
@@ -509,6 +518,7 @@ function viewHome() {
   return `
   <div class="hero"><div class="tw">${toad('toad', mood)}${mood === 'sleep' ? '<div class="zzz">z</div>' : ''}</div><div><div class="label">${now.toLocaleDateString('en-GB', { weekday: 'long', day: 'numeric', month: 'long' })}</div><h1>${greeting()}, ${esc(S.profile.name || 'friend')}</h1>
     <div class="bubble small" style="margin-top:10px">${toadLine()}</div></div></div>
+  ${reminderBanner()}
   ${reviewYear && S.items.length ? `<div class="banner cta" data-act="go" data-r="review-${reviewYear}" style="margin-top:20px">${starIco()}<div><b>Your ${reviewYear} in review is ready</b><div class="small muted">Every page, every hour, every heart.</div></div></div>` : ''}
   <div class="px card parch" style="margin-top:22px">${levelBox(p)}</div>
   <div class="stats4" style="margin-top:22px">
@@ -522,6 +532,8 @@ function viewHome() {
   ${reading.length ? `<div class="shelf-row">${reading.map(tile).join('')}</div>` : emptyBox('Nothing on the nightstand yet.', `<button class="btn primary" data-act="add" data-type="book">Add a book</button>`)}
   <div class="section"><h2>Currently playing</h2>${playing.length ? `<button class="link" data-act="go" data-r="games">See all</button>` : ''}</div>
   ${playing.length ? `<div class="shelf-row">${playing.map(tile).join('')}</div>` : emptyBox('No adventures in progress.', `<button class="btn mint" data-act="add" data-type="game">Add a game</button>`)}
+  ${questsCard()}
+  ${eventCard()}
   <div class="section"><h2>Quote of the day</h2></div>
   <div class="px card pink"><div class="quote">“${esc(q[0])}”</div><div class="label" style="margin-top:12px">— ${esc(q[1])}</div></div>
   <div class="section"><h2>The nook</h2><button class="link" data-act="go" data-r="shop">Decorate</button></div>
@@ -547,7 +559,7 @@ function shelfCase(list, type) {
 }
 function viewShelf(type) {
   const f = ui[type === 'book' ? 'books' : 'games'], all = S.items.filter(i => i.type === type), view = S.settings.shelfView[type];
-  let list = all.filter(i => f.status === 'all' || i.status === f.status);
+  let list = all.filter(i => f.status === 'all' || (f.status === 'lent' ? i.lent_to : i.status === f.status));
   if (f.q) { const q = f.q.toLowerCase(); list = list.filter(i => [i.title, i.author, i.genre, i.platform].join(' ').toLowerCase().includes(q)); }
   if (type === 'book' && f.genre) list = list.filter(i => i.genre === f.genre);
   if (type === 'game' && f.platform) list = list.filter(i => i.platform === f.platform);
@@ -559,7 +571,7 @@ function viewShelf(type) {
   <div class="page-head"><div><div class="label">${type === 'book' ? 'The shelf' : 'The arcade'}</div><h1>${type === 'book' ? 'Library' : 'Games'}</h1>${type === 'game' && S.settings.server ? `<button class="link" data-act="go" data-r="steam" style="margin-top:6px">Import from Steam</button>` : ''}</div>
     <div class="row"><div class="toggle2"><button class="${view === 'grid' ? 'on' : ''}" data-act="view" data-type="${type}" data-v="grid">Covers</button><button class="${view === 'shelf' ? 'on' : ''}" data-act="view" data-type="${type}" data-v="shelf">Shelf</button></div>
     <button class="btn sm ${type === 'book' ? 'primary' : 'mint'}" data-act="add" data-type="${type}">+ Add</button></div></div>
-  <div class="chips">${['all', ...STATUS].map(s => `<button class="chip ${f.status === s ? 'on' : ''}" data-act="filter" data-type="${type}" data-k="status" data-v="${s}">${s === 'all' ? 'All' : LABEL[type][s]}<span class="n">${s === 'all' ? all.length : all.filter(i => i.status === s).length}</span></button>`).join('')}</div>
+  <div class="chips">${['all', ...STATUS].map(s => `<button class="chip ${f.status === s ? 'on' : ''}" data-act="filter" data-type="${type}" data-k="status" data-v="${s}">${s === 'all' ? 'All' : LABEL[type][s]}<span class="n">${s === 'all' ? all.length : all.filter(i => i.status === s).length}</span></button>`).join('')}${all.some(i => i.lent_to) ? `<button class="chip ${f.status === 'lent' ? 'on' : ''}" data-act="filter" data-type="${type}" data-k="status" data-v="lent">Lent out<span class="n">${all.filter(i => i.lent_to).length}</span></button>` : ''}</div>
   <div class="grid2" style="margin:6px 0 22px">
     <input class="inp" type="search" placeholder="Search…" value="${esc(f.q)}" data-input="shelfq" data-type="${type}">
     <div class="grid2" style="gap:8px">
@@ -574,7 +586,7 @@ function viewShelf(type) {
 function viewWishlist() {
   const wb = books().filter(i => i.status === 'want'), wg = games().filter(i => i.status === 'want');
   const block = (arr, type) => arr.length ? `<div class="grid">${arr.map(it => `<div>${tile(it)}<button class="btn sm ${type === 'book' ? 'primary' : 'mint'}" style="width:calc(100% - 6px);margin-top:10px" data-act="start" data-id="${it.id}">${type === 'book' ? 'Start reading' : 'Start playing'}</button></div>`).join('')}</div>` : emptyBox(type === 'book' ? 'No books on the wishlist.' : 'No games on the wishlist.', `<button class="btn" data-act="add" data-type="${type}" data-status="want">Add to wishlist</button>`);
-  return `<div class="page-head"><div><div class="label">Someday soon</div><h1>Wishlist</h1></div></div>
+  return `<div class="page-head"><div><div class="label">Someday soon</div><h1>Wishlist</h1></div><button class="btn sm primary" data-act="jar">${jarIco()} Pick for me</button></div>
   <div class="section"><h2>Books to read</h2></div>${block(wb, 'book')}
   <div class="section"><h2>Games to play</h2></div>${block(wg, 'game')}`;
 }
@@ -601,6 +613,7 @@ function viewItem(id) {
       <div><span class="badge b-${it.status}">${B ? bookIco() : padIco()} ${L[it.status]}</span></div>
       <h1>${esc(it.title)}</h1>
       <div class="muted">${esc(B ? it.author : it.platform)}${it.genre ? ' · ' + esc(it.genre) : ''}</div>
+      ${itemExtrasTop(it)}
       <div class="hearts big">${[1, 2, 3, 4, 5].map(n => `<button data-act="rate" data-id="${id}" data-n="${n}" aria-label="${n} hearts">${heart(n <= (it.rating || 0))}</button>`).join('')}</div>
       <div class="row"><button class="btn sm" data-act="edit" data-id="${id}">Edit</button>${it.steam_appid ? `<a class="btn sm" href="https://store.steampowered.com/app/${esc(it.steam_appid)}" target="_blank" rel="noopener">Steam ↗</a>` : ''}</div>
     </div>
@@ -611,6 +624,7 @@ function viewItem(id) {
 
   <div class="section"><h2>Progress</h2><span class="label">${(B ? it.total_pages : it.total_hours) ? p + '%' : ''}</span></div>
   <div class="px card">
+    ${itemExtrasProgress(it)}
     ${it.status !== 'finished' ? `<div style="margin-bottom:16px">${sess && sess.itemId === id
       ? `<button class="btn mint" data-act="stopsession" style="width:calc(100% - 6px)">${timerIco()} Stop session</button>`
       : sess ? `<p class="note" style="margin:0">A session for another title is running — stop it first.</p>`
@@ -654,8 +668,9 @@ function viewItem(id) {
   <div class="section"><h2>Journal</h2><button class="link" data-act="journalfor" data-id="${id}">+ Write</button></div>
   ${entries.length ? `<div class="stack">${entries.map(entryCard).join('')}</div>` : `<p class="note">No entries about this one yet.</p>`}
 
+  ${itemExtrasBottom(it)}
   <div style="margin-top:34px;justify-content:space-between" class="row">
-    <span class="small muted">Added ${fmtDate(it.date_added)}</span>
+    <span class="small muted">Added ${fmtDate(it.date_added)}${it.imported ? ' · imported from ' + esc(it.imported) : ''}</span>
     <button class="btn sm danger" data-act="del" data-id="${id}">Delete</button>
   </div>`;
 }
@@ -747,6 +762,7 @@ function viewStats() {
   </div>
   <div class="section"><h2>Pages per month</h2></div><div class="px card">${barChart(d.pagesM, '#f29bb2', 'p')}</div>
   <div class="section"><h2>Hours per month</h2></div><div class="px card">${barChart(d.hoursM, '#8fcfa8', 'h')}</div>
+  ${calendarCard(y)}
   <div class="section"><h2>Little facts</h2></div>
   <div class="px card">
     <div class="kv"><span>Average hearts given</span><b>${avg}</b></div>
@@ -818,10 +834,10 @@ function viewShop() {
   const isOn = s => s.cat === 'outfit' ? sh[OUTFITS[s.id].slot] === s.id : s.cat === 'mascot' ? sh.mascot === s.id : s.cat === 'decor' ? sh.decor.includes(s.id) : (s.cat === 'theme' || s.cat === 'special') ? sh.theme === s.id : sh.companion === s.id;
   const label = (s, on) => s.cat === 'mascot' ? (on ? 'Your friend' : 'Choose') : (s.cat === 'theme' || s.cat === 'special') ? (on ? 'In use' : 'Use')
     : on ? (s.cat === 'decor' ? 'Put away' : s.cat === 'companion' ? 'Send home' : 'Take off') : (s.cat === 'decor' ? 'Display' : s.cat === 'companion' ? 'Invite' : 'Wear');
-  const ware = s => { const owned = !s.price || sh.owned.includes(s.id), on = isOn(s);
+  const ware = s => { const owned = s.event ? sh.owned.includes(s.id) : (!s.price || sh.owned.includes(s.id)), on = isOn(s);
     return `<div class="px ware ${on ? 'on' : owned ? 'owned' : ''}"><div class="art">${art(s)}</div><b>${esc(s.name)}</b>${s.cat === 'special' && SPECIAL_THEMES[s.id].game ? '<span class="label">game-inspired</span>' : ''}
       ${owned ? `<button class="btn sm ${on ? 'primary' : ''}" data-act="equip" data-id="${s.id}">${label(s, on)}</button>`
-        : `<div class="price">${acorn()} ${s.price}</div><button class="btn sm mint" data-act="buy" data-id="${s.id}" ${p.acorns < s.price ? 'disabled' : ''}>Buy</button>`}</div>`; };
+        : s.event ? `<span class="label">${esc(s.event)} prize</span>` : `<div class="price">${acorn()} ${s.price}</div><button class="btn sm mint" data-act="buy" data-id="${s.id}" ${p.acorns < s.price ? 'disabled' : ''}>Buy</button>`}</div>`; };
   const grid = cat === 'outfit'
     ? OUTFIT_SETS.map(([set, n]) => `<div class="section"><h2>${n}</h2></div><div class="shop-grid">${items.filter(s => OUTFITS[s.id].set === set).map(ware).join('')}</div>`).join('')
     : `<div class="shop-grid" style="margin-top:8px">${items.map(ware).join('')}</div>`;
@@ -861,9 +877,11 @@ function viewSettings() {
     <div class="row"><button class="btn sm" data-act="testserver" ${st.server ? '' : 'disabled'}>Test connection</button><button class="btn sm mint" data-act="steamsync" ${st.server ? '' : 'disabled'}>Sync hours now</button><button class="btn sm primary" data-act="go" data-r="steam" ${st.server ? '' : 'disabled'}>Import from Steam</button></div>
     <p class="note" style="margin:0" id="server-msg">${st.server ? (st.lastSteamSync ? 'Hours last synced ' + fmtDate(st.lastSteamSync) + '. They sync by themselves once a day when you open the app.' : 'Hours sync by themselves once a day when you open the app.') : 'Add the helper server address to search games by name (with real covers) and sync your Steam playtime.'}</p>
   </div>
+  <div class="section"><h2>Import</h2></div>
+  <div class="px card stack"><p style="margin:0">Bring your reading history from Goodreads or StoryGraph.</p><div class="row"><button class="btn primary" data-act="importcsv">Import a CSV</button>${st.server ? '<button class="btn" data-act="achsync">Sync Steam achievements</button>' : ''}</div></div>
   <div class="section"><h2>Danger zone</h2></div>
   <div class="px card"><button class="btn danger" data-act="wipe">Erase everything</button></div>
-  <p class="note" style="margin-top:22px;text-align:center">Ivy Shelf · v3 · book data from Open Library &amp; Google Books</p>`;
+  <p class="note" style="margin-top:22px;text-align:center">Ivy Shelf · v4 · book data from Open Library &amp; Google Books</p>`;
 }
 
 /* ---------- modal, toasts, celebration ---------- */
@@ -956,6 +974,7 @@ function formHTML() {
     <p class="note" style="margin-top:-6px"><a href="https://store.steampowered.com/search/?term=${encodeURIComponent(d.title || '')}" target="_blank" rel="noopener">Find it on Steam ↗</a> · <a href="https://howlongtobeat.com/?q=${encodeURIComponent(d.title || '')}" target="_blank" rel="noopener">How long to beat ↗</a></p>`}
   ${d._new ? `<div class="field"><span>STATUS</span><div class="seg">${STATUS.map(s => `<button class="${d.status === s ? 'on' : ''}" data-act="fstatus" data-s="${s}">${L[s]}</button>`).join('')}</div></div>
     ${B && d.status === 'active' ? `<label class="field"><span>CURRENT PAGE</span><input class="inp" type="number" inputmode="numeric" value="${esc(d.current_page)}" data-input="f" data-k="current_page"></label>` : ''}` : ''}
+  ${formExtras(d)}
   <label class="field"><span>SYNOPSIS</span><textarea class="inp" style="min-height:80px" data-input="f" data-k="synopsis">${esc(d.synopsis)}</textarea></label>
   <p class="err" id="form-err"></p>
   <div class="row" style="justify-content:flex-end"><button class="btn" data-act="close">Cancel</button><button class="btn primary" data-act="saveitem">${d._new ? 'Add to shelf' : 'Save'}</button></div>`;
@@ -1051,13 +1070,13 @@ function renderSessionPill() {
   const r = $('#session-root'); const ss = S.session; const it = ss ? byId(ss.itemId) : null;
   clearInterval(pillTimer);
   if (!ss || !it) { r.innerHTML = ''; if (ss && !it) S.session = null; return; }
-  r.innerHTML = `<div class="px session-pill">${timerIco()}<div class="tx">${it.type === 'book' ? 'Reading' : 'Playing'} · <i>${esc(it.title)}</i></div><span class="clock" id="pill-clock">${clock(elapsedMin())}</span><button class="btn sm mint" data-act="stopsession">Stop</button></div>`;
+  r.innerHTML = `<div class="px session-pill">${timerIco()}<div class="tx">${it.type === 'book' ? 'Reading' : 'Playing'} · <i>${esc(it.title)}</i></div><span class="clock" id="pill-clock">${clock(elapsedMin())}</span><button class="btn sm" data-act="openroom" aria-label="Reading room">${roomIco()}</button><button class="btn sm mint" data-act="stopsession">Stop</button></div>`;
   pillTimer = setInterval(() => { const c = $('#pill-clock'); if (c) c.textContent = clock(elapsedMin()); }, 1000);
 }
 function startSession(id) {
   const it = byId(id); S.session = { itemId: id, start: Date.now() };
   if (it.status !== 'active') setStatus(it, 'active', true);
-  sfx('start'); commit();
+  sfx('start'); commit(); if (typeof openRoom === 'function') openRoom();
 }
 function stopSession() {
   const ss = S.session; if (!ss) return; const it = byId(ss.itemId); const mins = elapsedMin();
@@ -1070,11 +1089,11 @@ function stopSession() {
     $('#ss-save').onclick = () => {
       const v = $('#ss-val').value, wasFinished = it.status === 'finished';
       S.sessions.push({ id: uid(), user_id: USER_ID, itemId: it.id, date: today(), start: ss.start, end: Date.now(), minutes: Math.max(1, Math.round(mins)) });
-      S.session = null; closeModal(); sfx('stop');
+      S.session = null; closeModal(); sfx('stop'); if (typeof closeRoom === 'function') closeRoom(true);
       if (B) setPage(it, v); else setHours(it, (it.hours_played || 0) + num(v));
       commit(); if (!wasFinished && it.status === 'finished') celebrate(it); else toast('Session saved', fmtMins(Math.max(1, mins)), timerIco());
     };
-    $('#ss-discard').onclick = () => { S.session = null; closeModal(); commit(); };
+    $('#ss-discard').onclick = () => { S.session = null; closeModal(); if (typeof closeRoom === 'function') closeRoom(true); commit(); };
   });
 }
 
@@ -1168,7 +1187,7 @@ async function steamSync(manual) {
     const map = new Map(d.games.map(g => [String(g.appid), g]));
     let added = 0, n = 0;
     linked.forEach(it => { const g = map.get(String(it.steam_appid)); if (g && g.hours > (it.hours_played || 0) + 0.05) { added += g.hours - (it.hours_played || 0); setHours(it, g.hours); n++; } });
-    S.settings.lastSteamSync = today(); commit();
+    S.settings.lastSteamSync = today(); commit(); if (typeof syncAchievements === 'function') syncAchievements(false);
     if (n) toast('Steam synced', `+${fmtHours(added)} h across ${n} game${n > 1 ? 's' : ''}`, padIco(), 'coin');
     else if (manual) toast('Steam synced', 'Everything was already up to date', padIco());
   } catch (e) { if (manual) toast('Steam sync failed', e.message); }
@@ -1277,7 +1296,7 @@ function buy(id) {
   commit();
 }
 function equip(id, quiet) {
-  const s = SHOP.find(x => x.id === id), sh = S.shop; if (!s || (s.price && !sh.owned.includes(id))) return;
+  const s = SHOP.find(x => x.id === id), sh = S.shop; if (!s || ((s.price || s.event) && !sh.owned.includes(id))) return;
   if (s.cat === 'mascot') sh.mascot = id;
   else if (s.cat === 'special') { sh.theme = id; skyKey = ''; }
   else if (s.cat === 'outfit') { const slot = OUTFITS[id].slot; sh[slot] = sh[slot] === id ? '' : id; }
@@ -1289,6 +1308,7 @@ function equip(id, quiet) {
 
 /* ---------- backup ---------- */
 async function exportBackup() {
+  S.settings.lastBackup = today(); save(); renderShell();
   const json = JSON.stringify(S, null, 1), name = `ivy-shelf-backup-${today()}.json`;
   const file = new File([json], name, { type: 'application/json' });
   try { if (navigator.canShare && navigator.canShare({ files: [file] })) { await navigator.share({ files: [file], title: 'Ivy Shelf backup' }); return; } } catch (e) { if (e.name === 'AbortError') return; }
@@ -1318,7 +1338,9 @@ const A = {
       <button class="nav-cloud" data-act="fabscan">${scanIco()}A book by barcode</button>
       <button class="nav-cloud" data-act="fabadd" data-type="game">${padIco()}A game</button>
       <button class="nav-cloud" data-act="fabjournal">${quillIco()}A journal entry</button>
-      <button class="nav-cloud" data-act="fabquote">${quoteIco()}A favourite line</button></div>`),
+      <button class="nav-cloud" data-act="fabquote">${quoteIco()}A favourite line</button>
+      <button class="nav-cloud" data-act="fabjar">${jarIco()}Pick something for me</button></div>`),
+  fabjar: () => { closeModal(); openJar(); },
   fabadd: d => { closeModal(); openItemForm(d.type, null, 'want'); },
   fabscan: () => { closeModal(); openItemForm('book', null, 'want'); openScanner(); },
   fabjournal: () => { closeModal(); entryForm(); },

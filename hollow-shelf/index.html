@@ -480,6 +480,84 @@ body[data-sky=theme] .sky{transition:none}
 [data-theme=phantom] body.darksky .link{color:#fff}
 [data-theme=phantom] body.darksky main :is(.px,.lockbox,.bubble,.btn,.banner) :is(.label,.muted,.note,.sub){color:var(--ink-soft)}
 [data-theme=phantom] body.darksky main :is(.px,.banner) .link{color:#e5101c}
+
+/* ---------- v4: reading room ---------- */
+.reading-room{position:fixed;inset:0;z-index:80;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;
+  background:linear-gradient(180deg,#2a2440 0%,#3b2f4f 55%,#5a4334 55%,#4a3628 100%);color:#fdf6e9;padding:calc(20px + var(--safe-t)) 18px calc(26px + var(--safe-b));animation:fade .4s;overflow:hidden}
+.rr-window{position:absolute;top:calc(40px + var(--safe-t));left:50%;width:min(62vw,320px);height:200px;transform:translateX(-50%);border:6px solid #a0714f;background:linear-gradient(180deg,#1b2140,#36406b);overflow:hidden;box-shadow:0 0 0 4px #5a3e2b}
+.rr-window::after{content:"";position:absolute;left:50%;top:0;bottom:0;width:6px;background:#a0714f;transform:translateX(-50%)}
+.rr-rain{position:absolute;inset:-40px 0 0;background:repeating-linear-gradient(105deg,transparent 0 14px,rgba(190,215,255,.35) 14px 15px);animation:rr-rain .5s linear infinite}
+@keyframes rr-rain{to{transform:translate(-8px,40px)}}
+.rr-scene{position:relative;width:100%;max-width:520px;height:230px;margin-bottom:12px}
+.rr-lamp{position:absolute;left:4%;bottom:0;width:56px}
+.rr-fire{position:absolute;right:2%;bottom:0;width:120px}
+.rr-friend{position:absolute;left:50%;bottom:0;width:180px;transform:translateX(-50%)}
+.rr-chair{position:absolute;left:0;bottom:0;width:180px;z-index:0}
+.rr-toad{position:absolute;left:30px;bottom:34px;width:120px;z-index:1;animation:breathe 3.5s ease-in-out infinite}
+.rr-panel{position:relative;width:100%;max-width:440px;text-align:center;background:rgba(20,16,30,.55);padding:16px 14px;border:3px solid #fdf6e9}
+.rr-what{font-size:17px}
+.rr-clock{font-family:var(--pixel);font-size:30px;margin:10px 0 14px;letter-spacing:2px}
+.rr-sounds{display:flex;gap:6px;flex-wrap:wrap;justify-content:center;margin-bottom:10px}
+.rr-sounds .chip{color:#5a3e2b}
+.rr-vol{display:flex;gap:10px;align-items:center;justify-content:center;font-family:var(--pixel);font-size:8px;margin-bottom:12px}
+.rr-vol input{width:160px;accent-color:#f6c9d3}
+.reading-room .btn{color:#5a3e2b;background:#fdf6e9}
+.reading-room .btn.mint{background:#c3e8d3}
+
+/* ---------- v4: jar ---------- */
+.jar-wrap{text-align:center;margin-bottom:12px}
+.jar{position:relative;width:120px;height:140px;margin:0 auto 10px;border:4px solid var(--ink);border-top-width:14px;background:rgba(214,236,246,.55);border-radius:6px 6px 22px 22px}
+.jar span{position:absolute;width:22px}
+.jar span svg{width:100%}
+.jar.shake{animation:jarshake .9s ease-in-out}
+@keyframes jarshake{0%,100%{transform:rotate(0)}15%{transform:rotate(-14deg)}30%{transform:rotate(12deg)}45%{transform:rotate(-10deg)}60%{transform:rotate(8deg)}75%{transform:rotate(-4deg)}}
+.jar-pick{display:grid;grid-template-columns:90px 1fr;gap:14px;align-items:center;text-align:left;padding:12px;border:2px solid var(--ink);background:var(--paper);animation:up .3s}
+
+/* ---------- v4: stickers ---------- */
+.sticker-page{display:flex;flex-wrap:wrap;gap:18px;padding:18px;background:var(--parchment);background-image:radial-gradient(rgba(90,62,43,.08) 1.5px,transparent 1.6px);background-size:16px 16px}
+.sticker{position:relative;width:96px;border:0;padding:6px;background:#fff;box-shadow:0 0 0 2px rgba(90,62,43,.25),0 6px 10px rgba(90,62,43,.18);border-radius:10px;cursor:pointer;transition:transform .2s}
+.sticker:active{transform:scale(1.06)!important}
+.sticker .cover{box-shadow:none;border-radius:6px}
+.st-hearts{position:absolute;left:50%;bottom:-10px;transform:translateX(-50%);background:#fff;color:#e8728f;font-size:12px;padding:0 6px;border-radius:999px;box-shadow:0 0 0 2px rgba(90,62,43,.25);white-space:nowrap}
+
+/* ---------- v4: friend's room ---------- */
+.room{position:relative;height:280px;overflow:hidden;background:linear-gradient(180deg,#f3dcc4 0 72%,#d9b48f 72% 100%);background-image:repeating-linear-gradient(90deg,rgba(255,255,255,.14) 0 2px,transparent 2px 24px),linear-gradient(180deg,#f3dcc4 0 72%,#d9b48f 72% 100%)}
+.room .pix{width:100%;height:auto}
+.r-lights{position:absolute;top:4px;left:3%;right:3%}
+.r-window{position:absolute;right:6%;top:30px;width:84px}
+.r-frame{position:absolute;left:32%;top:30px;width:50px}
+.r-shelf{position:absolute;left:30%;right:33%;top:110px}
+.r-shelf .items{display:flex;justify-content:space-around;align-items:flex-end;height:44px}
+.r-shelf .items svg{width:30px;height:auto}
+.r-shelf .plank{height:9px;background:var(--wood);border:2px solid var(--ink)}
+.r-bookcase{position:absolute;left:3%;bottom:44px;width:84px}
+.r-lamp{position:absolute;left:28%;bottom:40px;width:30px}
+.r-fire{position:absolute;right:3%;bottom:44px;width:92px}
+.r-plant{position:absolute;left:3%;bottom:6px;width:56px;z-index:2}
+.r-chair{position:absolute;left:50%;bottom:20px;width:110px;margin-left:-55px}
+.room .rug{position:absolute;left:50%;bottom:10px;width:160px;height:24px;margin-left:-80px;background:var(--pink);border:2px solid var(--ink);border-radius:50%}
+.r-friend{position:absolute;left:50%;bottom:22px;width:88px;margin-left:-44px;z-index:1}
+.r-friend.seated{bottom:44px}
+.r-friend .toad{width:100%;animation:bob 3.5s ease-in-out infinite}
+.twinkle{animation:flick 1.6s steps(2) infinite}
+body.darksky .room-window rect[fill="#cfe8f5"]{fill:#2c3366}
+
+/* ---------- v4: quests, calendar, tags ---------- */
+.quest{display:flex;gap:12px;align-items:center}
+.quest .q-check{flex:none;width:26px;height:26px;border:2px solid var(--ink);display:grid;place-items:center;font-family:var(--pixel);font-size:10px;background:var(--paper)}
+.quest.claimed{opacity:.6}
+.quest.claimed .q-check{background:var(--mint)}
+.q-acorn{display:inline-block;width:12px;vertical-align:middle}
+.q-art{flex:none;width:56px}
+.q-art svg{width:100%}
+.calendar{display:grid;grid-template-rows:repeat(7,1fr);grid-auto-flow:column;grid-auto-columns:1fr;gap:2px;overflow-x:auto}
+.calendar i,.row i.cal{display:block;aspect-ratio:1;min-width:5px;width:100%}
+.row i.cal{width:11px;height:11px;display:inline-block}
+.cal-x{visibility:hidden}
+.cal.l0{background:rgba(90,62,43,.08)}
+.cal.l1{background:#cfe8c0}.cal.l2{background:#9fd8b8}.cal.l3{background:#7cc4a0}
+.cal.l4{background:#f29bb2;box-shadow:inset 0 0 0 2px #e8728f}
+.b-tag{background:var(--pink-pale)}
 </style>
 </head>
 <body data-sky="day">
@@ -504,5 +582,6 @@ body[data-sky=theme] .sky{transition:none}
 <input type="file" id="file-scan" accept="image/*" capture="environment" hidden>
 <script src="js/sprites.js"></script>
 <script src="js/app.js"></script>
+<script src="js/features.js"></script>
 </body>
 </html>

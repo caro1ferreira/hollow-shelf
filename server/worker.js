@@ -7,6 +7,7 @@
  *   GET /games/ttb?id=...       -> "time to beat" estimate for one IGDB game
  *   GET /steam/library?user=... -> owned Steam games + playtime
  *                                  (user = SteamID64, or a profile link)
+ *   GET /steam/achievements?user=...&appid=... -> { got, total } for one game
  *
  * Secrets to add in Cloudflare (Settings -> Variables and Secrets):
  *   TWITCH_CLIENT_ID, TWITCH_CLIENT_SECRET, STEAM_API_KEY
@@ -36,6 +37,8 @@ export default {
           return json(await igdbTimeToBeat(url.searchParams.get('id'), env), 200, cors, 86400);
         case '/steam/library':
           return json(await steamLibrary(url.searchParams.get('user') || '', env), 200, cors);
+        case '/steam/achievements':
+          return json(await steamAchievements(url.searchParams.get('user') || '', url.searchParams.get('appid') || '', env), 200, cors);
         default:
           return json({ error: 'not found' }, 404, cors);
       }
@@ -131,4 +134,15 @@ async function steamLibrary(user, env) {
       last_played: g.rtime_last_played ? new Date(g.rtime_last_played * 1000).toISOString().slice(0, 10) : ''
     })).sort((a, b) => b.hours - a.hours)
   };
+}
+
+async function steamAchievements(user, appid, env) {
+  if (!env.STEAM_API_KEY) throw new Error('Steam key is not set up yet');
+  if (!/^\d+$/.test(appid)) return { got: 0, total: 0 };
+  const id = await steamId(user, env);
+  const r = await fetch(`https://api.steampowered.com/ISteamUserStats/GetPlayerAchievements/v1/?key=${env.STEAM_API_KEY}&steamid=${id}&appid=${appid}`);
+  if (!r.ok) return { got: 0, total: 0 }; // games without achievements answer with an error
+  const j = await r.json();
+  const list = (j.playerstats && j.playerstats.achievements) || [];
+  return { got: list.filter(a => a.achieved).length, total: list.length };
 }
