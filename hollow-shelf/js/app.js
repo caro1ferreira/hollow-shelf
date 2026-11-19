@@ -863,7 +863,7 @@ function viewSettings() {
   </div>
   <div class="section"><h2>Danger zone</h2></div>
   <div class="px card"><button class="btn danger" data-act="wipe">Erase everything</button></div>
-  <p class="note" style="margin-top:22px;text-align:center">Ivy Shelf · v2.1 · book data from Open Library &amp; Google Books</p>`;
+  <p class="note" style="margin-top:22px;text-align:center">Ivy Shelf · v3 · book data from Open Library &amp; Google Books</p>`;
 }
 
 /* ---------- modal, toasts, celebration ---------- */
